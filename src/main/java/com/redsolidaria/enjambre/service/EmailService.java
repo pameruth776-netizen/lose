@@ -1,124 +1,184 @@
 package com.redsolidaria.enjambre.service;
 
+import com.mailersend.sdk.MailerSend;
+import com.mailersend.sdk.emails.Email;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class EmailService {
 
-    @Value("${brevo.api.key}")
-    private String apiKey;
+    private final MailerSend mailerSend;
 
-    @Value("${brevo.email.from}")
+    @Value("${mailersend.email.from}")
     private String emailFrom;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    @Value("${mailersend.email.from.name}")
+    private String emailFromName;
 
-    private void sendEmailViaBrevo(String emailDestino, String subject, String content) {
-        String url = "https://api.brevo.com/v3/smtp/email";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("api-key", apiKey);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("sender", Map.of("name", "Red Solidaria UTP", "email", emailFrom));
-        body.put("to", List.of(Map.of("email", emailDestino)));
-        body.put("subject", subject);
-        body.put("textContent", content);
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+    @Async
+    public void enviarCodigoVerificacion(String emailDestino, String codigo) {
+        Email email = new Email();
+        email.setFrom(emailFromName, emailFrom);
+        email.addRecipient(emailDestino, emailDestino);
+        email.setSubject("Codigo de verificacion - Red Solidaria UTP");
+        email.setPlain("Hola,\n\nTu codigo de verificacion es: " + codigo +
+                        "\n\nEste codigo expira en 10 minutos.\n\n" +
+                        "Si no solicitaste este codigo, ignora este mensaje.\n\n" +
+                        "Saludos,\nEquipo Red Solidaria UTP");
 
         try {
-            restTemplate.postForEntity(url, entity, String.class);
-            System.out.println("✓ Correo enviado con éxito por API HTTP Brevo a: " + emailDestino);
+            mailerSend.emails().send(email);
+            System.out.println("✓ Correo enviado a: " + emailDestino + " | Código: " + codigo);
         } catch (Exception e) {
-            System.err.println("❌ ERROR al enviar correo por API HTTP Brevo a " + emailDestino + ": " + e.getMessage());
+            System.err.println("❌ ERROR al enviar correo de verificación a " + emailDestino + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     @Async
-    public void enviarCodigoVerificacion(String emailDestino, String codigo) {
-        String text = "Hola,\n\nTu codigo de verificacion es: " + codigo +
-                        "\n\nEste codigo expira en 10 minutos.\n\n" +
-                        "Si no solicitaste este codigo, ignora este mensaje.\n\n" +
-                        "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmailViaBrevo(emailDestino, "Codigo de verificacion - Red Solidaria UTP", text);
-    }
-
-    @Async
     public void enviarCorreoActivacion(String emailDestino) {
-        String text = "Hola,\n\nTu cuenta ha sido activada con exito. Ya puedes iniciar sesion en la plataforma.\n\n" +
-                        "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmailViaBrevo(emailDestino, "Tu cuenta ha sido activada - Red Solidaria UTP", text);
+        Email email = new Email();
+        email.setFrom(emailFromName, emailFrom);
+        email.addRecipient(emailDestino, emailDestino);
+        email.setSubject("Tu cuenta ha sido activada - Red Solidaria UTP");
+        email.setPlain("Hola,\n\nTu cuenta ha sido activada con exito. Ya puedes iniciar sesion en la plataforma.\n\n" +
+                        "Saludos,\nEquipo Red Solidaria UTP");
+
+        try {
+            mailerSend.emails().send(email);
+            System.out.println("✓ Correo de activación enviado a: " + emailDestino);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR al enviar correo de activación a " + emailDestino + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Async
     public void enviarCorreoRechazo(String emailDestino) {
-        String text = "Hola,\n\nTu cuenta no fue activada porque no cumple los requisitos. Puedes volver a registrarte corrigiendo la información.\n\n" +
-                        "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmailViaBrevo(emailDestino, "❌ Tu cuenta no fue activada - Red Solidaria UTP", text);
+        Email email = new Email();
+        email.setFrom(emailFromName, emailFrom);
+        email.addRecipient(emailDestino, emailDestino);
+        email.setSubject("❌ Tu cuenta no fue activada - Red Solidaria UTP");
+        email.setPlain("Hola,\n\nTu cuenta no fue activada porque no cumple los requisitos. Puedes volver a registrarte corrigiendo la información.\n\n" +
+                        "Saludos,\nEquipo Red Solidaria UTP");
+
+        try {
+            mailerSend.emails().send(email);
+            System.out.println("✓ Correo de rechazo enviado a: " + emailDestino);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR al enviar correo de rechazo a " + emailDestino + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Async
     public void enviarConfirmacionMonetaria(String emailDestino, String nombre, Double monto) {
-        String text = "Hola " + nombre + ",\n\n" +
+        Email email = new Email();
+        email.setFrom(emailFromName, emailFrom);
+        email.addRecipient(nombre, emailDestino);
+        email.setSubject("💖 ¡Tu donación monetaria ha sido confirmada! - Red Solidaria UTP");
+        email.setPlain("Hola " + nombre + ",\n\n" +
                         "Queremos agradecerte de todo corazón por tu generosa donación monetaria de S/. " + String.format("%.2f", monto) + ".\n" +
                         "Tu contribución ha sido verificada y confirmada con éxito. Gracias a ti, podremos seguir brindando apoyo y adquiriendo productos de primera necesidad para quienes más lo necesitan.\n\n" +
-                        "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmailViaBrevo(emailDestino, "💖 ¡Tu donación monetaria ha sido confirmada! - Red Solidaria UTP", text);
+                        "Saludos,\nEquipo Red Solidaria UTP");
+
+        try {
+            mailerSend.emails().send(email);
+            System.out.println("✓ Correo de confirmación monetaria enviado a: " + emailDestino + " | Monto: S/. " + monto);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR al enviar correo de confirmación monetaria a " + emailDestino + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Async
     public void enviarRechazoMonetaria(String emailDestino, String nombre) {
-        String text = "Hola " + nombre + ",\n\n" +
+        Email email = new Email();
+        email.setFrom(emailFromName, emailFrom);
+        email.addRecipient(nombre, emailDestino);
+        email.setSubject("⚠️ Actualización sobre tu donación monetaria - Red Solidaria UTP");
+        email.setPlain("Hola " + nombre + ",\n\n" +
                         "Lamentamos informarte que no hemos podido verificar el código de tu donación monetaria.\n" +
                         "Por este motivo, la donación ha sido marcada como rechazada. Si crees que se trata de un error, por favor ponte en contacto con nosotros o intenta registrarla nuevamente.\n\n" +
-                        "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmailViaBrevo(emailDestino, "⚠️ Actualización sobre tu donación monetaria - Red Solidaria UTP", text);
+                        "Saludos,\nEquipo Red Solidaria UTP");
+
+        try {
+            mailerSend.emails().send(email);
+            System.out.println("✓ Correo de rechazo monetaria enviado a: " + emailDestino);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR al enviar correo de rechazo monetaria a " + emailDestino + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Async
     public void enviarConfirmacionProductoRecoger(String emailDestino, String nombre, String producto, String horario) {
-        String text = "Hola " + nombre + ",\n\n" +
+        Email email = new Email();
+        email.setFrom(emailFromName, emailFrom);
+        email.addRecipient(nombre, emailDestino);
+        email.setSubject("📦 ¡Tu donación de producto ha sido aprobada! (Recojo en domicilio) - Red Solidaria UTP");
+        email.setPlain("Hola " + nombre + ",\n\n" +
                         "Nos alegra informarte que tu donación de producto (" + producto + ") ha sido aprobada.\n" +
                         "Hemos coordinado la entrega bajo la opción de: Recoger en domicilio.\n" +
                         "Un miembro de nuestro equipo se acercará a la dirección proporcionada dentro del horario seleccionado:\n" +
                         "⏰ Horario de recojo: " + horario + "\n\n" +
                         "Por favor, ten el producto listo. ¡Muchas gracias por tu valioso apoyo!\n\n" +
-                        "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmailViaBrevo(emailDestino, "📦 ¡Tu donación de producto ha sido aprobada! (Recojo en domicilio) - Red Solidaria UTP", text);
+                        "Saludos,\nEquipo Red Solidaria UTP");
+
+        try {
+            mailerSend.emails().send(email);
+            System.out.println("✓ Correo de recojo de producto enviado a: " + emailDestino + " | Producto: " + producto);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR al enviar correo de recojo de producto a " + emailDestino + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Async
     public void enviarConfirmacionProductoLlevar(String emailDestino, String nombre, String producto, String direccionSede, String horarioAtencion) {
-        String text = "Hola " + nombre + ",\n\n" +
+        Email email = new Email();
+        email.setFrom(emailFromName, emailFrom);
+        email.addRecipient(nombre, emailDestino);
+        email.setSubject("📦 ¡Tu donación de producto ha sido aprobada! (Llevar a sede) - Red Solidaria UTP");
+        email.setPlain("Hola " + nombre + ",\n\n" +
                         "Nos alegra informarte que tu donación de producto (" + producto + ") ha sido aprobada.\n" +
                         "Puedes acercarte a nuestra sede para realizar la entrega:\n" +
                         "📍 Dirección de la sede: " + direccionSede + "\n" +
                         "⏰ Horario de atención: " + horarioAtencion + "\n\n" +
                         "¡Muchas gracias por tu valioso apoyo para nuestra comunidad!\n\n" +
-                        "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmailViaBrevo(emailDestino, "📦 ¡Tu donación de producto ha sido aprobada! (Llevar a sede) - Red Solidaria UTP", text);
+                        "Saludos,\nEquipo Red Solidaria UTP");
+
+        try {
+            mailerSend.emails().send(email);
+            System.out.println("✓ Correo de entrega de producto en sede enviado a: " + emailDestino + " | Producto: " + producto);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR al enviar correo de entrega en sede a " + emailDestino + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Async
     public void enviarRechazoProducto(String emailDestino, String nombre) {
-        String text = "Hola " + nombre + ",\n\n" +
+        Email email = new Email();
+        email.setFrom(emailFromName, emailFrom);
+        email.addRecipient(nombre, emailDestino);
+        email.setSubject("⚠️ Actualización sobre tu donación de producto - Red Solidaria UTP");
+        email.setPlain("Hola " + nombre + ",\n\n" +
                         "Agradecemos enormemente tu intención de donar.\n" +
                         "Lamentablemente, en esta ocasión no podemos recibir el producto propuesto debido a políticas internas o falta de capacidad de almacenamiento para este tipo de implemento.\n" +
                         "Esperamos poder contar con tu ayuda en futuras oportunidades.\n\n" +
-                        "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmailViaBrevo(emailDestino, "⚠️ Actualización sobre tu donación de producto - Red Solidaria UTP", text);
+                        "Saludos,\nEquipo Red Solidaria UTP");
+
+        try {
+            mailerSend.emails().send(email);
+            System.out.println("✓ Correo de rechazo producto enviado a: " + emailDestino);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR al enviar correo de rechazo de producto a " + emailDestino + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
