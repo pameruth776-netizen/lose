@@ -71,8 +71,9 @@ public class AuthController {
                                               HttpSession session,
                                               Model model) {
         
-        if (!email.endsWith("@utp.edu.pe")) {
-            model.addAttribute("error", "Debes usar tu correo institucional @utp.edu.pe");
+        String lowerEmail = email.toLowerCase();
+        if (!lowerEmail.endsWith("@utp.edu.pe") && !lowerEmail.endsWith("@gmail.com") && !lowerEmail.endsWith("@hotmail.com")) {
+            model.addAttribute("error", "Debes usar un correo con dominio @utp.edu.pe, @gmail.com o @hotmail.com");
             return "registroVol";
         }
         
