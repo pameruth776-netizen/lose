@@ -15,37 +15,34 @@ import java.util.Map;
 @Service
 public class EmailService {
 
-    @Value("${mailersend.api.token}")
-    private String apiToken;
+    @Value("${brevo.api.key}")
+    private String apiKey;
 
-    @Value("${mailersend.email.from}")
+    @Value("${brevo.email.from}")
     private String emailFrom;
-
-    @Value("${mailersend.email.from.name}")
-    private String emailFromName;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    private void sendEmail(String emailDestino, String subject, String textContent) {
-        String url = "https://api.mailersend.com/v1/email";
+    private void sendEmailViaBrevo(String emailDestino, String subject, String content) {
+        String url = "https://api.brevo.com/v3/smtp/email";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + apiToken);
+        headers.set("api-key", apiKey);
 
         Map<String, Object> body = new HashMap<>();
-        body.put("from", Map.of("email", emailFrom, "name", emailFromName));
+        body.put("sender", Map.of("name", "Red Solidaria UTP", "email", emailFrom));
         body.put("to", List.of(Map.of("email", emailDestino)));
         body.put("subject", subject);
-        body.put("text", textContent);
+        body.put("textContent", content);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
         try {
             restTemplate.postForEntity(url, entity, String.class);
-            System.out.println("✓ Correo enviado a: " + emailDestino + " | Asunto: " + subject);
+            System.out.println("✓ Correo enviado con éxito por API HTTP Brevo a: " + emailDestino);
         } catch (Exception e) {
-            System.err.println("❌ ERROR al enviar correo a " + emailDestino + ": " + e.getMessage());
+            System.err.println("❌ ERROR al enviar correo por API HTTP Brevo a " + emailDestino + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -56,21 +53,21 @@ public class EmailService {
                         "\n\nEste codigo expira en 10 minutos.\n\n" +
                         "Si no solicitaste este codigo, ignora este mensaje.\n\n" +
                         "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmail(emailDestino, "Codigo de verificacion - Red Solidaria UTP", text);
+        sendEmailViaBrevo(emailDestino, "Codigo de verificacion - Red Solidaria UTP", text);
     }
 
     @Async
     public void enviarCorreoActivacion(String emailDestino) {
         String text = "Hola,\n\nTu cuenta ha sido activada con exito. Ya puedes iniciar sesion en la plataforma.\n\n" +
                         "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmail(emailDestino, "Tu cuenta ha sido activada - Red Solidaria UTP", text);
+        sendEmailViaBrevo(emailDestino, "Tu cuenta ha sido activada - Red Solidaria UTP", text);
     }
 
     @Async
     public void enviarCorreoRechazo(String emailDestino) {
         String text = "Hola,\n\nTu cuenta no fue activada porque no cumple los requisitos. Puedes volver a registrarte corrigiendo la información.\n\n" +
                         "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmail(emailDestino, "❌ Tu cuenta no fue activada - Red Solidaria UTP", text);
+        sendEmailViaBrevo(emailDestino, "❌ Tu cuenta no fue activada - Red Solidaria UTP", text);
     }
 
     @Async
@@ -79,7 +76,7 @@ public class EmailService {
                         "Queremos agradecerte de todo corazón por tu generosa donación monetaria de S/. " + String.format("%.2f", monto) + ".\n" +
                         "Tu contribución ha sido verificada y confirmada con éxito. Gracias a ti, podremos seguir brindando apoyo y adquiriendo productos de primera necesidad para quienes más lo necesitan.\n\n" +
                         "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmail(emailDestino, "💖 ¡Tu donación monetaria ha sido confirmada! - Red Solidaria UTP", text);
+        sendEmailViaBrevo(emailDestino, "💖 ¡Tu donación monetaria ha sido confirmada! - Red Solidaria UTP", text);
     }
 
     @Async
@@ -88,7 +85,7 @@ public class EmailService {
                         "Lamentamos informarte que no hemos podido verificar el código de tu donación monetaria.\n" +
                         "Por este motivo, la donación ha sido marcada como rechazada. Si crees que se trata de un error, por favor ponte en contacto con nosotros o intenta registrarla nuevamente.\n\n" +
                         "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmail(emailDestino, "⚠️ Actualización sobre tu donación monetaria - Red Solidaria UTP", text);
+        sendEmailViaBrevo(emailDestino, "⚠️ Actualización sobre tu donación monetaria - Red Solidaria UTP", text);
     }
 
     @Async
@@ -100,7 +97,7 @@ public class EmailService {
                         "⏰ Horario de recojo: " + horario + "\n\n" +
                         "Por favor, ten el producto listo. ¡Muchas gracias por tu valioso apoyo!\n\n" +
                         "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmail(emailDestino, "📦 ¡Tu donación de producto ha sido aprobada! (Recojo en domicilio) - Red Solidaria UTP", text);
+        sendEmailViaBrevo(emailDestino, "📦 ¡Tu donación de producto ha sido aprobada! (Recojo en domicilio) - Red Solidaria UTP", text);
     }
 
     @Async
@@ -112,7 +109,7 @@ public class EmailService {
                         "⏰ Horario de atención: " + horarioAtencion + "\n\n" +
                         "¡Muchas gracias por tu valioso apoyo para nuestra comunidad!\n\n" +
                         "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmail(emailDestino, "📦 ¡Tu donación de producto ha sido aprobada! (Llevar a sede) - Red Solidaria UTP", text);
+        sendEmailViaBrevo(emailDestino, "📦 ¡Tu donación de producto ha sido aprobada! (Llevar a sede) - Red Solidaria UTP", text);
     }
 
     @Async
@@ -122,6 +119,6 @@ public class EmailService {
                         "Lamentablemente, en esta ocasión no podemos recibir el producto propuesto debido a políticas internas o falta de capacidad de almacenamiento para este tipo de implemento.\n" +
                         "Esperamos poder contar con tu ayuda en futuras oportunidades.\n\n" +
                         "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmail(emailDestino, "⚠️ Actualización sobre tu donación de producto - Red Solidaria UTP", text);
+        sendEmailViaBrevo(emailDestino, "⚠️ Actualización sobre tu donación de producto - Red Solidaria UTP", text);
     }
 }
