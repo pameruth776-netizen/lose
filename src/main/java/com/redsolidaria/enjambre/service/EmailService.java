@@ -24,11 +24,27 @@ public class EmailService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     private void sendEmailViaBrevo(String emailDestino, String subject, String content) {
+        if (emailDestino == null || emailDestino.trim().isEmpty()) {
+            System.err.println("❌ ERROR: El correo de destino (to) está vacío o es nulo. No se puede enviar el correo.");
+            return;
+        }
+
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            System.err.println("❌ ERROR: La API Key de Brevo no está configurada (brevo.api.key).");
+            return;
+        }
+
+        if (emailFrom == null || emailFrom.trim().isEmpty()) {
+            System.err.println("❌ ERROR: El correo remitente no está configurado (brevo.email.from).");
+            return;
+        }
+
         String url = "https://api.brevo.com/v3/smtp/email";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("api-key", apiKey);
+        headers.set("accept", "application/json");
 
         Map<String, Object> body = new HashMap<>();
         body.put("sender", Map.of("name", "Red Solidaria UTP", "email", emailFrom));
@@ -41,8 +57,11 @@ public class EmailService {
         try {
             restTemplate.postForEntity(url, entity, String.class);
             System.out.println("✓ Correo enviado con éxito por API HTTP Brevo a: " + emailDestino);
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            System.err.println("❌ ERROR de API Brevo (" + e.getStatusCode() + ") al enviar correo a " + emailDestino + ": " + e.getResponseBodyAsString());
+            e.printStackTrace();
         } catch (Exception e) {
-            System.err.println("❌ ERROR al enviar correo por API HTTP Brevo a " + emailDestino + ": " + e.getMessage());
+            System.err.println("❌ ERROR inesperado al enviar correo por API HTTP Brevo a " + emailDestino + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
