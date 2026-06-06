@@ -112,9 +112,8 @@ public class ApiAuthController {
             @RequestParam("certificadoLaboral") MultipartFile certificadoLaboral,
             HttpSession session) {
 
-        String lowerEmail = email.toLowerCase();
-        if (!lowerEmail.endsWith("@utp.edu.pe") && !lowerEmail.endsWith("@gmail.com") && !lowerEmail.endsWith("@hotmail.com")) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Debes usar un correo con dominio @utp.edu.pe, @gmail.com o @hotmail.com"));
+        if (!email.endsWith("@utp.edu.pe")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Debes usar tu correo institucional @utp.edu.pe"));
         }
 
         if (!password.equals(confirmPassword)) {
