@@ -31,6 +31,8 @@ public class EmailService {
 
         if (apiKey == null || apiKey.trim().isEmpty()) {
             System.err.println("❌ ERROR: La API Key de Brevo no está configurada (brevo.api.key).");
+            System.err.println("   → Asegúrate de configurar la variable de entorno BREVO_API_KEY en tu servidor/Docker.");
+            System.err.println("   → Puedes obtenerla en Brevo: https://app.brevo.com → SMTP & API → API Keys");
             return;
         }
 
