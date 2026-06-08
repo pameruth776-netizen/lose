@@ -105,6 +105,14 @@ public class AyudaWebSocketHandler extends TextWebSocketHandler {
                 String decision = root.get("decision").asText();
                 ayudaService.responderAyuda(solicitudId, usuarioId, decision);
             }
+            case "TERMINAR_AYUDA" -> {
+                Long solicitudId = root.has("solicitudId") && !root.get("solicitudId").isNull()
+                        ? root.get("solicitudId").asLong()
+                        : null;
+                if (solicitudId != null) {
+                    ayudaService.terminarAyuda(solicitudId, usuarioId);
+                }
+            }
             default -> {
             }
         }

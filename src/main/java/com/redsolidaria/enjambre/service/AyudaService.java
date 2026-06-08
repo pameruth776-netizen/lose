@@ -24,6 +24,7 @@ public class AyudaService {
     private final SolicitudAyudaIntentoRepository solicitudAyudaIntentoRepository;
     private final UsuarioService usuarioService;
     private final AyudaConnectionRegistry connectionRegistry;
+    private final HistorialAyudaRepository historialAyudaRepository;
 
     private final ObjectMapper objectMapper;
 
@@ -35,6 +36,7 @@ public class AyudaService {
             SolicitudAyudaIntentoRepository solicitudAyudaIntentoRepository,
             UsuarioService usuarioService,
             AyudaConnectionRegistry connectionRegistry,
+            HistorialAyudaRepository historialAyudaRepository,
             ObjectMapper objectMapper
     ) {
         this.ubicacionUsuarioRepository = ubicacionUsuarioRepository;
@@ -44,6 +46,7 @@ public class AyudaService {
         this.solicitudAyudaIntentoRepository = solicitudAyudaIntentoRepository;
         this.usuarioService = usuarioService;
         this.connectionRegistry = connectionRegistry;
+        this.historialAyudaRepository = historialAyudaRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -420,5 +423,44 @@ public class AyudaService {
                         Math.sin(dLon / 2) * Math.sin(dLon / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
+    }
+
+    public void terminarAyuda(Long solicitudId, Long usuarioId) {
+        SolicitudAyuda solicitud = solicitudAyudaRepository.findById(solicitudId)
+                .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
+
+        // Validar que el estado sea ACEPTADA
+        if (!"ACEPTADA".equals(solicitud.getEstado())) {
+            throw new IllegalStateException("La solicitud no se encuentra en curso (estado ACEPTADA)");
+        }
+
+        // Validar que el usuario que intenta terminar sea el discapacitado o el voluntario aceptado
+        boolean isDiscapacitado = solicitud.getDiscapacitado() != null && usuarioId.equals(solicitud.getDiscapacitado().getId());
+        boolean isVoluntario = solicitud.getVoluntarioAceptado() != null && usuarioId.equals(solicitud.getVoluntarioAceptado().getId());
+
+        if (!isDiscapacitado && !isVoluntario) {
+            throw new IllegalArgumentException("No estás autorizado para terminar esta ayuda");
+        }
+
+        // Cambiar el estado a FINALIZADA
+        solicitud.setEstado("FINALIZADA");
+        solicitudAyudaRepository.save(solicitud);
+
+        // Crear registro en historial
+        HistorialAyuda historial = new HistorialAyuda(solicitud);
+        historialAyudaRepository.save(historial);
+
+        // Notificar por WebSocket a ambos usuarios
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", "AYUDA_FINALIZADA");
+        payload.put("solicitudId", solicitudId);
+        payload.put("mensaje", "La ayuda ha sido completada correctamente.");
+
+        if (solicitud.getDiscapacitado() != null) {
+            connectionRegistry.sendToUser(solicitud.getDiscapacitado().getId(), payload);
+        }
+        if (solicitud.getVoluntarioAceptado() != null) {
+            connectionRegistry.sendToUser(solicitud.getVoluntarioAceptado().getId(), payload);
+        }
     }
 }
