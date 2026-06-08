@@ -1064,6 +1064,13 @@
                             if (btn) btn.style.display = '';
                             setUIIdle();
                             break;
+                        case 'AYUDA_FINALIZADA':
+                            sesionAceptada = false;
+                            setEstado('La ayuda ha sido completada con éxito.');
+                            showToast('✅ ¡Ayuda finalizada con éxito!', 'success', 5000);
+                            if (btn) btn.style.display = '';
+                            setUIIdle();
+                            break;
                     }
                 };
 
@@ -1083,13 +1090,8 @@
                     return;
                 }
                 if (solicitudActivaId) {
-                    socket.send(JSON.stringify({ type: 'CANCELAR_SOLICITUD', solicitudId: solicitudActivaId }));
+                    socket.send(JSON.stringify({ type: 'TERMINAR_AYUDA', solicitudId: solicitudActivaId }));
                 }
-                sesionAceptada = false;
-                if (btn) btn.style.display = ''; // Restaurar visibilidad botón principal
-                setEstado('Ayuda finalizada. Puedes solicitar ayuda nuevamente.');
-                showToast('✅ Ayuda finalizada correctamente.', 'success', 4000);
-                setUIIdle();
             };
 
             // Botón principal: solo para solicitar ayuda

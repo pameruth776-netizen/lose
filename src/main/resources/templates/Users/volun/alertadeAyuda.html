@@ -998,7 +998,11 @@
 
                 // Listener del botón de terminar
                 document.getElementById('btnTerminarAyuda')?.addEventListener('click', () => {
-                    terminarAyuda();
+                    if (socket && socket.readyState === WebSocket.OPEN && solicitudAceptadaId) {
+                        socket.send(JSON.stringify({ type: 'TERMINAR_AYUDA', solicitudId: solicitudAceptadaId }));
+                    } else {
+                        terminarAyuda();
+                    }
                 });
 
                 const myLat = lastPosition?.lat ?? null;
@@ -1274,6 +1278,12 @@
                             if (data.lat != null && data.lng != null) {
                                 updateDisMarker(Number(data.lat), Number(data.lng));
                             }
+                            break;
+                        }
+                        case 'SOLICITUD_CANCELADA':
+                        case 'SOLICITUD_CANCELADA_POR_USUARIO':
+                        case 'AYUDA_FINALIZADA': {
+                            terminarAyuda();
                             break;
                         }
                     }

@@ -24,10 +24,10 @@ public class DonacionProducto {
     @Column(name = "estado_producto", nullable = false)
     private String estadoProducto;
 
-    @Column(name = "nombre_completo", nullable = false)
+    @Transient
     private String nombreCompleto;
 
-    @Column(nullable = false)
+    @Transient
     private String email;
 
     @Column(nullable = false)
@@ -53,4 +53,12 @@ public class DonacionProducto {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
+
+    public String getNombreCompleto() {
+        return usuario != null ? usuario.getNombreCompleto() : nombreCompleto;
+    }
+
+    public String getEmail() {
+        return usuario != null ? usuario.getEmail() : email;
+    }
 } 
