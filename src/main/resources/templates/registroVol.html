@@ -17,33 +17,42 @@
             <p>Completa tu información como estudiante UTP</p>
         </div>
 
+        <!-- Alerta de errores de validación backend -->
+        <div th:if="${error}" class="rs-alert rs-alert-danger" style="background-color: #fee; color: #c33; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #f87171; display: flex; align-items: center; gap: 8px;">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #c33; flex-shrink: 0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            <span th:text="${error}" style="font-weight: 500;"></span>
+        </div>
+
         <form th:action="@{/registro/voluntario}" method="post" enctype="multipart/form-data">
             <div class="rs-form-grid">
                 <div class="rs-field">
                     <label>Nombres <span class="req">*</span></label>
-                    <input type="text" name="nombres" required />
+                    <input type="text" name="nombres" th:value="${nombres}" required />
                 </div>
                 <div class="rs-field">
                     <label>Apellidos <span class="req">*</span></label>
-                    <input type="text" name="apellidos" required />
+                    <input type="text" name="apellidos" th:value="${apellidos}" required />
                 </div>
                 <div class="rs-field rs-form-full">
                     <label>Correo Electrónico <span class="req">*</span></label>
-                    <input type="email" name="email" placeholder="ejemplo@utp.edu.pe, @gmail.com o @hotmail.com" required />
-                    <span class="rs-field-hint">Ejemplo: usuario@utp.edu.pe, usuario@gmail.com o usuario@hotmail.com</span>
+                    <input type="email" name="email" th:value="${email}" placeholder="U12345678@utp.edu.pe" pattern="[uU][0-9]{8}@utp\.edu\.pe" title="Debe ser un correo institucional UTP (ejemplo: U12345678@utp.edu.pe)" required />
+                    <span class="rs-field-hint">Solo se permite correo institucional UTP con formato U12345678@utp.edu.pe</span>
+                    <div id="emailValidationError" class="validation-message"></div>
                 </div>
                 <div class="rs-field">
                     <label>Código de Estudiante <span class="req">*</span></label>
-                    <input type="text" name="codigo" placeholder="U12345678" required />
+                    <input type="text" name="codigo" th:value="${codigo}" placeholder="U12345678" pattern="[uU][0-9]{8}" title="Debe ser un código UTP válido (ejemplo: U12345678)" required />
+                    <span class="rs-field-hint">Código de estudiante UTP (8 dígitos)</span>
+                    <div id="codigoValidationError" class="validation-message"></div>
                 </div>
                 <div class="rs-field">
                     <label>Carrera <span class="req">*</span></label>
                     <select name="carrera" required>
                         <option value="">Selecciona tu carrera</option>
-                        <option>Ingeniería de Sistemas</option>
-                        <option>Ingeniería Civil</option>
-                        <option>Administración</option>
-                        <option>Psicología</option>
+                        <option th:selected="${carrera == 'Ingeniería de Sistemas'}">Ingeniería de Sistemas</option>
+                        <option th:selected="${carrera == 'Ingeniería Civil'}">Ingeniería Civil</option>
+                        <option th:selected="${carrera == 'Administración'}">Administración</option>
+                        <option th:selected="${carrera == 'Psicología'}">Psicología</option>
                     </select>
                 </div>
                 <div class="rs-field rs-form-full">
@@ -178,6 +187,113 @@
                     confirmPassword.addEventListener('input', validatePasswordsMatch);
                 }
 
+                // Validación de correo y código en tiempo real
+                const emailInput = document.querySelector('[name="email"]');
+                const codigoInput = document.querySelector('[name="codigo"]');
+                const emailError = document.getElementById('emailValidationError');
+                const codigoError = document.getElementById('codigoValidationError');
+                
+                let isEmailValid = true;
+                let isCodigoValid = true;
+                
+                async function checkEmailRealTime() {
+                    const email = emailInput.value.trim();
+                    if (!email) {
+                        emailInput.classList.remove('invalid', 'valid');
+                        emailError.style.display = 'none';
+                        isEmailValid = true;
+                        return;
+                    }
+                    
+                    // Validar patrón
+                    const regex = /^[uU][0-9]{8}@utp\.edu\.pe$/;
+                    if (!regex.test(email)) {
+                        emailInput.classList.add('invalid');
+                        emailInput.classList.remove('valid');
+                        emailError.innerHTML = '<span class="validation-icon">⚠️</span> El correo debe tener el formato U12345678@utp.edu.pe';
+                        emailError.className = 'validation-message error';
+                        isEmailValid = false;
+                        return;
+                    }
+                    
+                    // Validar si ya está registrado en la base de datos
+                    try {
+                        const response = await fetch(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+                        const data = await response.json();
+                        if (data.exists) {
+                            emailInput.classList.add('invalid');
+                            emailInput.classList.remove('valid');
+                            emailError.innerHTML = '<span class="validation-icon">⚠️</span> Este correo ya está registrado';
+                            emailError.className = 'validation-message error';
+                            isEmailValid = false;
+                        } else {
+                            emailInput.classList.add('valid');
+                            emailInput.classList.remove('invalid');
+                            emailError.innerHTML = '<span class="validation-icon">✓</span> Correo disponible';
+                            emailError.className = 'validation-message success';
+                            isEmailValid = true;
+                        }
+                    } catch (err) {
+                        console.error('Error al validar correo:', err);
+                    }
+                }
+                
+                async function checkCodigoRealTime() {
+                    const codigo = codigoInput.value.trim();
+                    if (!codigo) {
+                        codigoInput.classList.remove('invalid', 'valid');
+                        codigoError.style.display = 'none';
+                        isCodigoValid = true;
+                        return;
+                    }
+                    
+                    // Validar patrón
+                    const regex = /^[uU][0-9]{8}$/;
+                    if (!regex.test(codigo)) {
+                        codigoInput.classList.add('invalid');
+                        codigoInput.classList.remove('valid');
+                        codigoError.innerHTML = '<span class="validation-icon">⚠️</span> El código debe empezar con U y tener 8 dígitos (ej. U12345678)';
+                        codigoError.className = 'validation-message error';
+                        isCodigoValid = false;
+                        return;
+                    }
+                    
+                    // Validar si ya está registrado en la base de datos
+                    try {
+                        const response = await fetch(`/api/auth/check-codigo?codigo=${encodeURIComponent(codigo)}`);
+                        const data = await response.json();
+                        if (data.exists) {
+                            codigoInput.classList.add('invalid');
+                            codigoInput.classList.remove('valid');
+                            codigoError.innerHTML = '<span class="validation-icon">⚠️</span> Este código de estudiante ya está registrado';
+                            codigoError.className = 'validation-message error';
+                            isCodigoValid = false;
+                        } else {
+                            codigoInput.classList.add('valid');
+                            codigoInput.classList.remove('invalid');
+                            codigoError.innerHTML = '<span class="validation-icon">✓</span> Código disponible';
+                            codigoError.className = 'validation-message success';
+                            isCodigoValid = true;
+                        }
+                    } catch (err) {
+                        console.error('Error al validar código:', err);
+                    }
+                }
+                
+                if (emailInput) {
+                    emailInput.addEventListener('blur', checkEmailRealTime);
+                    emailInput.addEventListener('input', () => {
+                        emailError.style.display = 'none';
+                    });
+                }
+                
+                if (codigoInput) {
+                    codigoInput.addEventListener('blur', checkCodigoRealTime);
+                    codigoInput.addEventListener('input', () => {
+                        codigoError.style.display = 'none';
+                    });
+                }
+
                 // Validar documentos requeridos antes de enviar
                 function validateDocuments() {
                     const certificadoLaboral = document.getElementById('certificadoLaboral');
@@ -210,6 +326,18 @@
                         if (!validatePasswordsMatch()) {
                             e.preventDefault();
                             alert('⚠️ Las contraseñas no coinciden. Por favor, verifica.');
+                            return false;
+                        }
+
+                        if (!isEmailValid) {
+                            e.preventDefault();
+                            alert('⚠️ El correo electrónico institucional no es válido o ya está registrado.');
+                            return false;
+                        }
+
+                        if (!isCodigoValid) {
+                            e.preventDefault();
+                            alert('⚠️ El código de estudiante no es válido o ya está registrado.');
                             return false;
                         }
 

@@ -18,27 +18,45 @@
             <p>Completa tu información personal</p>
         </div>
 
-        <form th:action="@{/registro/discapacitado}" method="post" enctype="multipart/form-data">
+        <!-- Alerta de errores de validación backend -->
+        <div th:if="${#fields.hasErrors('*')}" class="rs-alert rs-alert-danger" style="background-color: #fee; color: #c33; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #f87171;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #c33; flex-shrink: 0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <strong style="font-weight: 600;">Por favor, corrige los siguientes errores:</strong>
+            </div>
+            <ul style="margin: 0; padding-left: 28px;">
+                <li th:each="err : ${#fields.errors('*')}" th:text="${err}" style="margin-top: 4px; font-weight: 500;"></li>
+            </ul>
+        </div>
+        <div th:if="${error}" class="rs-alert rs-alert-danger" style="background-color: #fee; color: #c33; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #f87171; display: flex; align-items: center; gap: 8px;">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: #c33; flex-shrink: 0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            <span th:text="${error}" style="font-weight: 500;"></span>
+        </div>
+
+        <form th:action="@{/registro/discapacitado}" th:object="${personaDiscapacitadaDTO}" method="post" enctype="multipart/form-data">
             <div class="rs-form-grid">
                 <!-- Campos básicos -->
                 <div class="rs-field">
                     <label>Nombres <span class="req">*</span></label>
-                    <input type="text" name="nombres" required />
+                    <input type="text" name="nombres" th:value="*{nombres}" required />
                 </div>
                 <div class="rs-field">
                     <label>Apellidos <span class="req">*</span></label>
-                    <input type="text" name="apellidos" required />
+                    <input type="text" name="apellidos" th:value="*{apellidos}" required />
                 </div>
                 <div class="rs-field rs-form-full">
                     <label>Correo electrónico <span class="req">*</span></label>
-                    <input type="email" name="email" required />
+                    <input type="email" name="email" th:value="*{email}" placeholder="ejemplo@gmail.com o ejemplo@hotmail.com" pattern="[a-zA-Z0-9._%+-]+@(gmail\.com|hotmail\.com)" title="Debe ser un correo con dominio @gmail.com o @hotmail.com" required />
+                    <span class="rs-field-hint">Solo se permiten correos con dominio @gmail.com o @hotmail.com</span>
+                    <div id="emailValidationError" class="validation-message"></div>
                 </div>
                 
                 <!-- CAMPO MODIFICADO: Nro. DNI -->
                 <div class="rs-field rs-form-full">
                     <label>Nro. DNI <span class="req">*</span></label>
-                    <input type="text" name="conadis" placeholder="Ej: 12345678" required />
+                    <input type="text" name="conadis" th:value="*{conadis}" placeholder="Ej: 12345678" pattern="[0-9]{8}" title="Debe ser un DNI válido (8 dígitos)" required />
                     <span class="rs-field-hint">Ingresa tu número de DNI (8 dígitos)</span>
+                    <div id="conadisValidationError" class="validation-message"></div>
                 </div>
 
                 <!-- CAMPO CON TOOLTIP: Nro. certificado de discapacidad -->
@@ -47,8 +65,9 @@
                         Nro. certificado de discapacidad: 
                         <span class="icono-ayuda" id="iconoAyuda">❓</span>
                     </label>
-                    <input type="text" name="certificadoDiscapacidad" placeholder="Ej: CERT-2024-001" required />
+                    <input type="text" name="certificadoDiscapacidad" th:value="*{certificadoDiscapacidad}" placeholder="Ej: CERT-2024-001" required />
                     <span class="rs-field-hint">Ingresa el número que aparece en tu certificado</span>
+                    <div id="certificadoValidationError" class="validation-message"></div>
                 </div>
                 
                 <!-- Tipo de discapacidad con opción múltiple -->
@@ -56,20 +75,20 @@
                     <label>Tipo de discapacidad <span class="req">*</span></label>
                     <select name="tipoDiscapacidad" required>
                         <option value="">Selecciona</option>
-                        <option>Auditiva</option>
-                        <option>Motriz</option>
-                        <option>Del habla</option>
-                        <option>Discapacidad Múltiple</option>
+                        <option th:selected="*{tipoDiscapacidad == 'Auditiva'}">Auditiva</option>
+                        <option th:selected="*{tipoDiscapacidad == 'Motriz'}">Motriz</option>
+                        <option th:selected="*{tipoDiscapacidad == 'Del habla'}">Del habla</option>
+                        <option th:selected="*{tipoDiscapacidad == 'Discapacidad Múltiple'}">Discapacidad Múltiple</option>
                     </select>
                 </div>
                 
                 <div class="rs-field">
                     <label>Teléfono / Celular <span class="req">*</span></label>
-                    <input type="tel" name="telefono" required />
+                    <input type="tel" name="telefono" th:value="*{telefono}" required />
                 </div>
                 <div class="rs-field rs-form-full">
                     <label>Dirección <span class="req">*</span></label>
-                    <input type="text" name="direccion" placeholder="San Juan de Lurigancho" required />
+                    <input type="text" name="direccion" th:value="*{direccion}" placeholder="San Juan de Lurigancho" required />
                 </div>
                 
                 <!-- Contraseñas -->
@@ -347,6 +366,149 @@
                     confirmPassword.addEventListener('input', validatePasswordsMatch);
                 }
 
+                // Validación en tiempo real (AJAX) para Correo, DNI y Certificado
+                const emailInput = document.querySelector('[name="email"]');
+                const conadisInput = document.querySelector('[name="conadis"]');
+                const certificadoInput = document.querySelector('[name="certificadoDiscapacidad"]');
+                
+                const emailError = document.getElementById('emailValidationError');
+                const conadisError = document.getElementById('conadisValidationError');
+                const certificadoError = document.getElementById('certificadoValidationError');
+                
+                let isEmailValid = true;
+                let isConadisValid = true;
+                let isCertificadoValid = true;
+                
+                async function checkEmailRealTime() {
+                    const email = emailInput.value.trim();
+                    if (!email) {
+                        emailInput.classList.remove('invalid', 'valid');
+                        emailError.style.display = 'none';
+                        isEmailValid = true;
+                        return;
+                    }
+                    
+                    // Validar patrón (gmail.com o hotmail.com)
+                    const regex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|hotmail\.com)$/i;
+                    if (!regex.test(email)) {
+                        emailInput.classList.add('invalid');
+                        emailInput.classList.remove('valid');
+                        emailError.innerHTML = '<span class="validation-icon">⚠️</span> Debe ser un correo con dominio @gmail.com o @hotmail.com';
+                        emailError.className = 'validation-message error';
+                        isEmailValid = false;
+                        return;
+                    }
+                    
+                    // Validar si ya existe
+                    try {
+                        const response = await fetch(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+                        const data = await response.json();
+                        if (data.exists) {
+                            emailInput.classList.add('invalid');
+                            emailInput.classList.remove('valid');
+                            emailError.innerHTML = '<span class="validation-icon">⚠️</span> Este correo ya está registrado';
+                            emailError.className = 'validation-message error';
+                            isEmailValid = false;
+                        } else {
+                            emailInput.classList.add('valid');
+                            emailInput.classList.remove('invalid');
+                            emailError.innerHTML = '<span class="validation-icon">✓</span> Correo disponible';
+                            emailError.className = 'validation-message success';
+                            isEmailValid = true;
+                        }
+                    } catch (err) {
+                        console.error('Error al validar correo:', err);
+                    }
+                }
+                
+                async function checkConadisRealTime() {
+                    const conadis = conadisInput.value.trim();
+                    if (!conadis) {
+                        conadisInput.classList.remove('invalid', 'valid');
+                        conadisError.style.display = 'none';
+                        isConadisValid = true;
+                        return;
+                    }
+                    
+                    // Validar patrón (8 dígitos)
+                    const regex = /^[0-9]{8}$/;
+                    if (!regex.test(conadis)) {
+                        conadisInput.classList.add('invalid');
+                        conadisInput.classList.remove('valid');
+                        conadisError.innerHTML = '<span class="validation-icon">⚠️</span> El DNI debe tener exactamente 8 dígitos';
+                        conadisError.className = 'validation-message error';
+                        isConadisValid = false;
+                        return;
+                    }
+                    
+                    // Validar si ya existe
+                    try {
+                        const response = await fetch(`/api/auth/check-conadis?conadis=${encodeURIComponent(conadis)}`);
+                        const data = await response.json();
+                        if (data.exists) {
+                            conadisInput.classList.add('invalid');
+                            conadisInput.classList.remove('valid');
+                            conadisError.innerHTML = '<span class="validation-icon">⚠️</span> Este DNI ya está registrado';
+                            conadisError.className = 'validation-message error';
+                            isConadisValid = false;
+                        } else {
+                            conadisInput.classList.add('valid');
+                            conadisInput.classList.remove('invalid');
+                            conadisError.innerHTML = '<span class="validation-icon">✓</span> DNI disponible';
+                            conadisError.className = 'validation-message success';
+                            isConadisValid = true;
+                        }
+                    } catch (err) {
+                        console.error('Error al validar DNI:', err);
+                    }
+                }
+                
+                async function checkCertificadoRealTime() {
+                    const certificado = certificadoInput.value.trim();
+                    if (!certificado) {
+                        certificadoInput.classList.remove('invalid', 'valid');
+                        certificadoError.style.display = 'none';
+                        isCertificadoValid = true;
+                        return;
+                    }
+                    
+                    // Validar si ya existe
+                    try {
+                        const response = await fetch(`/api/auth/check-certificado?certificado=${encodeURIComponent(certificado)}`);
+                        const data = await response.json();
+                        if (data.exists) {
+                            certificadoInput.classList.add('invalid');
+                            certificadoInput.classList.remove('valid');
+                            certificadoError.innerHTML = '<span class="validation-icon">⚠️</span> Este número de certificado ya está registrado';
+                            certificadoError.className = 'validation-message error';
+                            isCertificadoValid = false;
+                        } else {
+                            certificadoInput.classList.add('valid');
+                            certificadoInput.classList.remove('invalid');
+                            certificadoError.innerHTML = '<span class="validation-icon">✓</span> Certificado disponible';
+                            certificadoError.className = 'validation-message success';
+                            isCertificadoValid = true;
+                        }
+                    } catch (err) {
+                        console.error('Error al validar certificado:', err);
+                    }
+                }
+                
+                if (emailInput) {
+                    emailInput.addEventListener('blur', checkEmailRealTime);
+                    emailInput.addEventListener('input', () => { emailError.style.display = 'none'; });
+                }
+                
+                if (conadisInput) {
+                    conadisInput.addEventListener('blur', checkConadisRealTime);
+                    conadisInput.addEventListener('input', () => { conadisError.style.display = 'none'; });
+                }
+                
+                if (certificadoInput) {
+                    certificadoInput.addEventListener('blur', checkCertificadoRealTime);
+                    certificadoInput.addEventListener('input', () => { certificadoError.style.display = 'none'; });
+                }
+
                 function validateDocuments() {
                     const dniFotoDelantera = document.getElementById('dniFotoDelantera');
                     const dniFotoTrasera = document.getElementById('dniFotoTrasera');
@@ -381,6 +543,24 @@
                         if (!validatePasswordsMatch()) {
                             e.preventDefault();
                             alert('⚠️ Las contraseñas no coinciden. Por favor, verifica.');
+                            return false;
+                        }
+
+                        if (!isEmailValid) {
+                            e.preventDefault();
+                            alert('⚠️ El correo electrónico no es válido o ya está registrado.');
+                            return false;
+                        }
+
+                        if (!isConadisValid) {
+                            e.preventDefault();
+                            alert('⚠️ El DNI ingresado no es válido o ya está registrado.');
+                            return false;
+                        }
+
+                        if (!isCertificadoValid) {
+                            e.preventDefault();
+                            alert('⚠️ El número de certificado ingresado ya está registrado.');
                             return false;
                         }
                         
