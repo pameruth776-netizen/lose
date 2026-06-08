@@ -71,49 +71,57 @@ public class AuthController {
                                               HttpSession session,
                                               Model model) {
         
-        String lowerEmail = email.toLowerCase();
-        if (!lowerEmail.endsWith("@utp.edu.pe") && !lowerEmail.endsWith("@gmail.com") && !lowerEmail.endsWith("@hotmail.com")) {
-            model.addAttribute("error", "Debes usar un correo con dominio @utp.edu.pe, @gmail.com o @hotmail.com");
+        // Validar formato del correo institucional UTP (U12345678@utp.edu.pe)
+        if (email == null || !email.matches("^[uU]\\d{8}@utp\\.edu\\.pe$")) {
+            model.addAttribute("error", "❌ Debes usar tu correo institucional UTP con formato U12345678@utp.edu.pe");
+            restaurarCamposVoluntario(model, nombres, apellidos, email, codigo, carrera);
             return "registroVol";
         }
         
         if (!password.equals(confirmPassword)) {
             model.addAttribute("error", "Las contraseñas no coinciden");
+            restaurarCamposVoluntario(model, nombres, apellidos, email, codigo, carrera);
             return "registroVol";
         }
         
         if (password.length() < 6) {
             model.addAttribute("error", "La contraseña debe tener al menos 6 caracteres");
+            restaurarCamposVoluntario(model, nombres, apellidos, email, codigo, carrera);
             return "registroVol";
         }
         
         // Validar que el email no esté ya registrado en BD
         if (usuarioService.existeEmail(email)) {
             model.addAttribute("error", "❌ El correo ya está registrado");
+            restaurarCamposVoluntario(model, nombres, apellidos, email, codigo, carrera);
             return "registroVol";
         }
         
         // Validar que el código no esté ya registrado
         if (usuarioService.existeCodigoVoluntario(codigo)) {
             model.addAttribute("error", "❌ El código de estudiante ya está registrado");
+            restaurarCamposVoluntario(model, nombres, apellidos, email, codigo, carrera);
             return "registroVol";
         }
         
         // ✅ Validar que se haya subido el Certificado Único Laboral
         if (certificadoLaboral == null || certificadoLaboral.isEmpty()) {
             model.addAttribute("error", "❌ Debes subir tu Certificado Único Laboral (PDF)");
+            restaurarCamposVoluntario(model, nombres, apellidos, email, codigo, carrera);
             return "registroVol";
         }
         
         // ✅ Validar que el archivo sea PDF
         if (!certificadoLaboral.getContentType().equals("application/pdf")) {
             model.addAttribute("error", "❌ El Certificado Único Laboral debe ser un archivo PDF válido");
+            restaurarCamposVoluntario(model, nombres, apellidos, email, codigo, carrera);
             return "registroVol";
         }
         
         // ✅ Validar tamaño máximo (ejemplo: 5MB)
         if (certificadoLaboral.getSize() > 5 * 1024 * 1024) {
             model.addAttribute("error", "❌ El archivo PDF no debe superar los 5MB");
+            restaurarCamposVoluntario(model, nombres, apellidos, email, codigo, carrera);
             return "registroVol";
         }
         
@@ -151,8 +159,17 @@ public class AuthController {
             
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
+            restaurarCamposVoluntario(model, nombres, apellidos, email, codigo, carrera);
             return "registroVol";
         }
+    }
+
+    private void restaurarCamposVoluntario(Model model, String nombres, String apellidos, String email, String codigo, String carrera) {
+        model.addAttribute("nombres", nombres);
+        model.addAttribute("apellidos", apellidos);
+        model.addAttribute("email", email);
+        model.addAttribute("codigo", codigo);
+        model.addAttribute("carrera", carrera);
     }
 
     // ========== PROCESAR REGISTRO DISCAPACITADO (GUARDA EN SESIÓN) ==========
@@ -172,6 +189,15 @@ public class AuthController {
             result.rejectValue("password", "error", "La contraseña debe tener al menos 6 caracteres");
         }
         
+        // Validar dominio de correo para discapacitado (@gmail.com o @hotmail.com)
+        String email = dto.getEmail();
+        if (email != null) {
+            String lowerEmail = email.toLowerCase();
+            if (!lowerEmail.endsWith("@gmail.com") && !lowerEmail.endsWith("@hotmail.com")) {
+                result.rejectValue("email", "error", "❌ Debes usar un correo con dominio @gmail.com o @hotmail.com");
+            }
+        }
+        
         // Validar que el email no esté ya registrado en BD
         if (usuarioService.existeEmail(dto.getEmail())) {
             result.rejectValue("email", "error", "❌ El correo ya está registrado");
@@ -188,6 +214,7 @@ public class AuthController {
         }
         
         if (result.hasErrors()) {
+            model.addAttribute("personaDiscapacitadaDTO", dto);
             return "registroDis";
         }
         
@@ -225,6 +252,7 @@ public class AuthController {
             
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
+            model.addAttribute("personaDiscapacitadaDTO", dto);
             return "registroDis";
         }
     }
