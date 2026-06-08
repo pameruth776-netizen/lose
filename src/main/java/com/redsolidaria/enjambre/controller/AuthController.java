@@ -72,8 +72,8 @@ public class AuthController {
                                               Model model) {
         
         String lowerEmail = email.toLowerCase();
-        if (!lowerEmail.endsWith("@utp.edu.pe") && !lowerEmail.endsWith("@gmail.com") && !lowerEmail.endsWith("@hotmail.com")) {
-            model.addAttribute("error", "Debes usar un correo con dominio @utp.edu.pe, @gmail.com o @hotmail.com");
+        if (!lowerEmail.matches("^u\\d{8}@utp\\.edu\\.pe$")) {
+            model.addAttribute("error", "Debes usar tu correo institucional con el formato u12345678@utp.edu.pe");
             return "registroVol";
         }
         
@@ -172,6 +172,12 @@ public class AuthController {
             result.rejectValue("password", "error", "La contraseña debe tener al menos 6 caracteres");
         }
         
+        // Validar dominio permitido para correos de personas con discapacidad
+        String lowerEmailDto = dto.getEmail() != null ? dto.getEmail().toLowerCase() : "";
+        if (!(lowerEmailDto.endsWith("@gmail.com") || lowerEmailDto.endsWith("@hotmail.com"))) {
+            result.rejectValue("email", "error", "Debes usar un correo @gmail.com o @hotmail.com");
+        }
+
         // Validar que el email no esté ya registrado en BD
         if (usuarioService.existeEmail(dto.getEmail())) {
             result.rejectValue("email", "error", "❌ El correo ya está registrado");

@@ -112,8 +112,9 @@ public class ApiAuthController {
             @RequestParam("certificadoLaboral") MultipartFile certificadoLaboral,
             HttpSession session) {
 
-        if (!email.endsWith("@utp.edu.pe")) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Debes usar tu correo institucional @utp.edu.pe"));
+        String lowerEmail = email.toLowerCase();
+        if (!lowerEmail.matches("^u\\d{8}@utp\\.edu\\.pe$")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Debes usar tu correo institucional con el formato u12345678@utp.edu.pe"));
         }
 
         if (!password.equals(confirmPassword)) {
@@ -194,6 +195,13 @@ public class ApiAuthController {
             result.rejectValue("password", "error", "La contraseña debe tener al menos 6 caracteres");
         }
 
+        String lowerEmailDto = dto.getEmail() != null ? dto.getEmail().toLowerCase() : "";
+
+        // Solo permitir gmail.com o hotmail.com para personas con discapacidad
+        if (!(lowerEmailDto.endsWith("@gmail.com") || lowerEmailDto.endsWith("@hotmail.com"))) {
+            result.rejectValue("email", "error", "Debes usar un correo @gmail.com o @hotmail.com");
+        }
+
         if (usuarioService.existeEmail(dto.getEmail())) {
             result.rejectValue("email", "error", "❌ El correo ya está registrado");
         }
@@ -250,6 +258,16 @@ public class ApiAuthController {
     }
 
     // ========== VERIFICAR CÓDIGO ==========
+    // ========== CHECK EMAIL (AJAX) ==========
+    @GetMapping("/check-email")
+    public ResponseEntity<?> checkEmail(@RequestParam String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email requerido"));
+        }
+        boolean exists = usuarioService.existeEmail(email);
+        return ResponseEntity.ok(Map.of("exists", exists));
+    }
+
     @PostMapping("/verificar-codigo")
     public ResponseEntity<?> verificarCodigo(@RequestBody Map<String, String> payload, HttpSession session) {
         String email = payload.get("email");
