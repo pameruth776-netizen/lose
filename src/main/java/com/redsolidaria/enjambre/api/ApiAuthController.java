@@ -112,8 +112,8 @@ public class ApiAuthController {
             @RequestParam("certificadoLaboral") MultipartFile certificadoLaboral,
             HttpSession session) {
 
-        if (email == null || !email.matches("^[uU]\\d{8}@utp\\.edu\\.pe$")) {
-            return ResponseEntity.badRequest().body(Map.of("error", "❌ Debes usar tu correo institucional UTP con formato U12345678@utp.edu.pe"));
+        if (!email.endsWith("@utp.edu.pe")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Debes usar tu correo institucional @utp.edu.pe"));
         }
 
         if (!password.equals(confirmPassword)) {
@@ -192,15 +192,6 @@ public class ApiAuthController {
 
         if (dto.getPassword() != null && dto.getPassword().length() < 6) {
             result.rejectValue("password", "error", "La contraseña debe tener al menos 6 caracteres");
-        }
-
-        // Validar dominio de correo para discapacitado
-        String email = dto.getEmail();
-        if (email != null) {
-            String lowerEmail = email.toLowerCase();
-            if (!lowerEmail.endsWith("@gmail.com") && !lowerEmail.endsWith("@hotmail.com")) {
-                result.rejectValue("email", "error", "❌ Debes usar un correo con dominio @gmail.com o @hotmail.com");
-            }
         }
 
         if (usuarioService.existeEmail(dto.getEmail())) {
@@ -320,27 +311,6 @@ public class ApiAuthController {
         } else {
             return ResponseEntity.badRequest().body(Map.of("error", "❌ Código inválido o expirado. Vuelve a intentarlo."));
         }
-    }
-
-    // ========== ENDPOINTS DE VALIDACIÓN EN TIEMPO REAL ==========
-    @GetMapping("/check-email")
-    public ResponseEntity<?> checkEmail(@RequestParam String email) {
-        return ResponseEntity.ok(Map.of("exists", usuarioService.existeEmail(email)));
-    }
-
-    @GetMapping("/check-codigo")
-    public ResponseEntity<?> checkCodigo(@RequestParam String codigo) {
-        return ResponseEntity.ok(Map.of("exists", usuarioService.existeCodigoVoluntario(codigo)));
-    }
-
-    @GetMapping("/check-conadis")
-    public ResponseEntity<?> checkConadis(@RequestParam String conadis) {
-        return ResponseEntity.ok(Map.of("exists", usuarioService.existeConadis(conadis)));
-    }
-
-    @GetMapping("/check-certificado")
-    public ResponseEntity<?> checkCertificado(@RequestParam String certificado) {
-        return ResponseEntity.ok(Map.of("exists", usuarioService.existeCertificadoDiscapacidad(certificado)));
     }
 
     private String guardarFoto(MultipartFile file, String prefijo) throws IOException {
