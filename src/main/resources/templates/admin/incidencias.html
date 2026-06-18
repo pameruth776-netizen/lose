@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{admin/layoutAdm :: html(content=~{::content})}"
+      th:replace="~{admin/layoutAdm :: html}"
       th:with="titulo='Gestión de Incidencias'">
 <head></head>
 <body>
-    <div th:fragment="content" class="incidencias-container">
+    <div th:fragment="content">
         <style>
             .incidencias-container {
                 max-width: 1200px;
