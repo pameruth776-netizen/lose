@@ -24,9 +24,6 @@ public class HistorialAyuda {
     @Column(name = "fecha_finalizacion", nullable = false)
     private LocalDateTime fechaFinalizacion = LocalDateTime.now();
 
-    @OneToOne(mappedBy = "historialAyuda", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private CalificacionAyuda calificacion;
-
     public HistorialAyuda(SolicitudAyuda solicitud) {
         this.solicitud = solicitud;
         this.fechaFinalizacion = LocalDateTime.now();
