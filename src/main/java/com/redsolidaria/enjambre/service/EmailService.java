@@ -142,4 +142,17 @@ public class EmailService {
                         "Saludos,\nEquipo Red Solidaria UTP";
         sendEmailViaBrevo(emailDestino, "⚠️ Actualización sobre tu donación de producto - Red Solidaria UTP", text);
     }
+
+    @Async
+    public void enviarNotificacionCalificacion(String emailDestino, String nombreVoluntario, String medalla, String comentario) {
+        String comentarioTexto = (comentario != null && !comentario.trim().isEmpty()) ? 
+                "\nComentario de la persona asistida: \"" + comentario + "\"" : "";
+        String text = "Hola " + nombreVoluntario + ",\n\n" +
+                        "¡Has recibido una nueva calificación en la plataforma!\n" +
+                        "Medalla otorgada: " + medalla + "\n" +
+                        comentarioTexto + "\n\n" +
+                        "¡Muchas gracias por tu valioso apoyo en la comunidad de Red Solidaria UTP!\n\n" +
+                        "Saludos,\nEquipo Red Solidaria UTP";
+        sendEmailViaBrevo(emailDestino, "🥇 ¡Has recibido una nueva calificación! - Red Solidaria UTP", text);
+    }
 }
