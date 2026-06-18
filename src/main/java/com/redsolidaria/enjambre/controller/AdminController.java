@@ -3,10 +3,15 @@ package com.redsolidaria.enjambre.controller;
 import com.redsolidaria.enjambre.dto.AdminDTO;
 import com.redsolidaria.enjambre.model.Administrador;
 import com.redsolidaria.enjambre.model.Usuario;
+import com.redsolidaria.enjambre.model.EstadoIncidencia;
+import com.redsolidaria.enjambre.model.IncidenciaAyuda;
 import com.redsolidaria.enjambre.service.UsuarioService;
 import com.redsolidaria.enjambre.service.EmailService;
+import com.redsolidaria.enjambre.service.IncidenciaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -14,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
+import java.util.Map;
+import java.util.List;
 
 @Controller
 @RequestMapping("/admin")
@@ -24,6 +31,9 @@ public class AdminController {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private IncidenciaService incidenciaService;
 
     // ========== DASHBOARD ==========
     
@@ -176,5 +186,37 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("error", "❌ Error al rechazar la cuenta: " + e.getMessage());
         }
         return "redirect:/admin/activacion";
+    }
+
+    @GetMapping("/incidencias")
+    public String incidencias(Model model) {
+        List<IncidenciaAyuda> lista = incidenciaService.listarTodas();
+        model.addAttribute("incidencias", lista);
+        model.addAttribute("estados", EstadoIncidencia.values());
+        return "admin/incidencias";
+    }
+
+    @PostMapping("/api/incidencia/cambiar-estado")
+    @ResponseBody
+    public ResponseEntity<?> cambiarEstado(@RequestParam Long id,
+                                           @RequestParam EstadoIncidencia estado,
+                                           @RequestParam(required = false) String resolucion) {
+        try {
+            incidenciaService.cambiarEstado(id, estado, resolucion);
+            return ResponseEntity.ok(Map.of("mensaje", "Estado de la incidencia actualizado correctamente"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/api/incidencia/eliminar")
+    @ResponseBody
+    public ResponseEntity<?> eliminarIncidencia(@RequestParam Long id) {
+        try {
+            incidenciaService.eliminarIncidencia(id);
+            return ResponseEntity.ok(Map.of("mensaje", "Incidencia eliminada correctamente"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

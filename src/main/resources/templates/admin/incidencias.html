@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layoutAdm :: html(content=~{::content})}"
+      th:with="titulo='Gestión de Incidencias'">
+<head></head>
+<body>
+    <div th:fragment="content" class="incidencias-container">
+        <style>
+            .incidencias-container {
+                max-width: 1200px;
+                margin: 40px auto;
+                padding: 0 20px;
+                font-family: 'Outfit', 'Inter', sans-serif;
+            }
+            .incidencias-header {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                margin-bottom: 30px;
+                border-bottom: 2px solid rgba(239, 68, 68, 0.1);
+                padding-bottom: 20px;
+                flex-wrap: wrap;
+            }
+            .incidencias-header-icon {
+                width: 56px;
+                height: 56px;
+                min-width: 56px;
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+            }
+            .incidencias-header-icon svg {
+                width: 28px;
+                height: 28px;
+            }
+            .incidencias-header-text {
+                flex: 1;
+                min-width: 0;
+            }
+            .incidencias-title {
+                margin: 0;
+                font-size: 2.2rem;
+                font-weight: 800;
+                color: #1e3a8a;
+                background: linear-gradient(135deg, #1e3a8a 0%, #ef4444 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                word-break: break-word;
+            }
+            .incidencias-subtitle {
+                margin: 4px 0 0 0;
+                color: #6b7280;
+                font-size: 1rem;
+                line-height: 1.5;
+            }
+
+            /* Filters section */
+            .filter-container {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+            }
+            .filter-btn {
+                background: #f1f5f9;
+                border: 1px solid #cbd5e1;
+                padding: 8px 16px;
+                border-radius: 30px;
+                font-weight: 600;
+                font-size: 0.85rem;
+                color: #475569;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .filter-btn:hover {
+                background: #e2e8f0;
+            }
+            .filter-btn.active {
+                background: #ef4444;
+                color: white;
+                border-color: #ef4444;
+                box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+            }
+            
+            .incidencias-card {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                border-radius: 24px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+                padding: 30px;
+            }
+            
+            .table-responsive {
+                width: 100%;
+                overflow-x: auto;
+                border-radius: 16px;
+                -webkit-overflow-scrolling: touch;
+            }
+            .incidencias-table {
+                width: 100%;
+                border-collapse: collapse;
+                text-align: left;
+                min-width: 1000px;
+            }
+            .incidencias-table th {
+                background: rgba(239, 68, 68, 0.06);
+                color: #1e3a8a;
+                font-weight: 700;
+                font-size: 0.9rem;
+                padding: 16px 18px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                border-bottom: 2px solid rgba(239, 68, 68, 0.1);
+                white-space: nowrap;
+            }
+            .incidencias-table td {
+                padding: 16px 18px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+                color: #334155;
+                font-size: 0.95rem;
+                vertical-align: middle;
+            }
+            .incidencias-table tr:hover td {
+                background-color: rgba(239, 68, 68, 0.01);
+            }
+            
+            /* Badges */
+            .badge-status {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 5px 12px;
+                border-radius: 40px;
+                font-weight: 700;
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                white-space: nowrap;
+            }
+            .badge-pendiente {
+                background: #fee2e2;
+                color: #991b1b;
+                border: 1px solid #fca5a5;
+            }
+            .badge-revisado {
+                background: #fef3c7;
+                color: #92400e;
+                border: 1px solid #fcd34d;
+            }
+            .badge-resuelto {
+                background: #d1fae5;
+                color: #065f46;
+                border: 1px solid #6ee7b7;
+            }
+            
+            /* Evidence links */
+            .evidence-link {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                color: #ef4444;
+                font-weight: 700;
+                text-decoration: none;
+                transition: color 0.2s;
+                font-size: 0.9rem;
+            }
+            .evidence-link:hover {
+                color: #b91c1c;
+                text-decoration: underline;
+            }
+            
+            .btn-action-blue {
+                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-weight: 700;
+                font-size: 0.85rem;
+                cursor: pointer;
+                box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+                transition: all 0.2s;
+            }
+            .btn-action-blue:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 14px rgba(59, 130, 246, 0.3);
+            }
+            .btn-action-red {
+                background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-weight: 700;
+                font-size: 0.85rem;
+                cursor: pointer;
+                box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+                transition: all 0.2s;
+            }
+            .btn-action-red:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 14px rgba(239, 68, 68, 0.3);
+            }
+            
+            .actions-cell {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            
+            /* Custom Modals */
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(15, 23, 42, 0.6);
+                backdrop-filter: blur(4px);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+                padding: 16px;
+            }
+            .modal-content {
+                background: white;
+                border-radius: 20px;
+                width: 100%;
+                max-width: 550px;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                animation: slideUp 0.3s ease-out;
+            }
+            .modal-header {
+                padding: 20px 24px;
+                color: white;
+                font-weight: 800;
+                font-size: 1.25rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            }
+            .modal-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                cursor: pointer;
+            }
+            .modal-body {
+                padding: 24px;
+            }
+            .modal-body label {
+                display: block;
+                font-weight: 700;
+                font-size: 0.85rem;
+                color: #334155;
+                margin-bottom: 6px;
+            }
+            .form-control {
+                width: 100%;
+                border: 1.5px solid #cbd5e1;
+                border-radius: 10px;
+                padding: 10px 12px;
+                font-family: inherit;
+                font-size: 0.95rem;
+                color: #1e293b;
+                margin-bottom: 16px;
+            }
+            .form-control:focus {
+                outline: none;
+                border-color: #3b82f6;
+            }
+            .modal-footer {
+                padding: 16px 24px;
+                background: #f8fafc;
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+                border-top: 1px solid #e2e8f0;
+            }
+            .btn-modal-save {
+                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 10px;
+                font-weight: 700;
+                font-size: 0.9rem;
+                cursor: pointer;
+            }
+            .btn-modal-cancel {
+                background: #e2e8f0;
+                color: #475569;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 10px;
+                font-weight: 700;
+                font-size: 0.9rem;
+                cursor: pointer;
+            }
+            
+            /* Toast Notifications */
+            .toast-container {
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                z-index: 3000;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .toast {
+                background: #1e293b;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 10px;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                font-weight: 600;
+                font-size: 0.9rem;
+                opacity: 0;
+                transform: translateY(20px);
+                animation: toastIn 0.3s forwards, toastOut 0.3s 3.5s forwards;
+            }
+            .toast.toast-success { border-left: 4px solid #3b82f6; }
+            .toast.toast-error { border-left: 4px solid #ef4444; }
+
+            .detail-field {
+                margin-bottom: 12px;
+                font-size: 0.95rem;
+            }
+            .detail-field strong {
+                color: #1e293b;
+            }
+            .detail-field span {
+                color: #475569;
+            }
+
+            @keyframes slideUp {
+                from { transform: translateY(40px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            @keyframes toastIn {
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes toastOut {
+                to { opacity: 0; transform: translateY(-20px); }
+            }
+            
+            .empty-state {
+                text-align: center;
+                padding: 50px 20px;
+            }
+            .empty-state-icon {
+                font-size: 4rem;
+                margin-bottom: 20px;
+                display: inline-block;
+            }
+            .empty-state h3 {
+                font-size: 1.5rem;
+                color: #374151;
+                margin: 0 0 10px 0;
+                font-weight: 800;
+            }
+            .empty-state p {
+                color: #6b7280;
+                max-width: 400px;
+                margin: 0 auto;
+                font-size: 1rem;
+                line-height: 1.5;
+            }
+        </style>
+
+        <div class="incidencias-header">
+            <div class="incidencias-header-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+            </div>
+            <div class="incidencias-header-text">
+                <h1 class="incidencias-title">Gestión de Incidencias</h1>
+                <p class="incidencias-subtitle">Supervisa, revisa y resuelve las incidencias reportadas en las ayudas brindadas.</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-container">
+            <button class="filter-btn active" id="btnFilterAll" onclick="applyFilter('ALL', 'btnFilterAll')">Todas</button>
+            <button class="filter-btn" id="btnFilterPendiente" onclick="applyFilter('PENDIENTE', 'btnFilterPendiente')">Pendientes</button>
+            <button class="filter-btn" id="btnFilterRevisado" onclick="applyFilter('REVISADO', 'btnFilterRevisado')">Revisadas</button>
+            <button class="filter-btn" id="btnFilterResuelto" onclick="applyFilter('RESUELTO', 'btnFilterResuelto')">Resueltas</button>
+        </div>
+
+        <div class="incidencias-card">
+            <!-- Caso: No hay incidencias -->
+            <div th:if="${#lists.isEmpty(incidencias)}" class="empty-state" id="emptyStateMsg">
+                <span class="empty-state-icon" role="img" aria-label="Escudo de seguridad">🛡️</span>
+                <h3>Sin incidencias registradas</h3>
+                <p>Todo está en orden. No hay reportes de incidencias en este momento en la comunidad.</p>
+            </div>
+
+            <!-- Caso: Hay incidencias -->
+            <div th:if="${!#lists.isEmpty(incidencias)}" class="table-responsive">
+                <table class="incidencias-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Código Ayuda</th>
+                            <th>Reportado Por</th>
+                            <th>Involucrado</th>
+                            <th>Fecha</th>
+                            <th>Descripción</th>
+                            <th>Evidencia</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incidenciasTableBody">
+                        <tr th:each="inc : ${incidencias}" th:data-estado="${inc.estado.name()}" th:id="'inc-row-' + ${inc.id}">
+                            <td style="font-weight: bold; color: #1e3a8a;" th:text="${inc.id}">1</td>
+                            <td style="font-family: monospace; font-weight: bold;" th:text="${'#AY-' + inc.historialAyuda.solicitud.id}">#AY-001</td>
+                            <td>
+                                <span th:text="${inc.reportadoPor.nombreCompleto}">Juan Pérez</span>
+                                <br>
+                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;" th:text="${inc.reportadoPor.rol}">Voluntario</span>
+                            </td>
+                            <td>
+                                <span th:text="${inc.involucrado.nombreCompleto}">María Gómez</span>
+                                <br>
+                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;" th:text="${inc.involucrado.rol}">Discapacitado</span>
+                            </td>
+                            <td th:text="${#temporals.format(inc.fechaReporte, 'dd/MM/yyyy hh:mm a')}">08/06/2026 04:30 PM</td>
+                            <td>
+                                <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
+                                     th:text="${inc.descripcion}" th:title="${inc.descripcion}">Problema ocurrido...</div>
+                            </td>
+                            <td>
+                                <div th:if="${inc.rutaArchivo != null}">
+                                    <a th:href="${inc.rutaArchivo}" target="_blank" class="evidence-link" th:download="${inc.nombreArchivo}">
+                                        <span th:if="${inc.tipoEvidencia.name() == 'FOTO'}">📷 Ver Foto</span>
+                                        <span th:if="${inc.tipoEvidencia.name() == 'VIDEO'}">🎥 Ver Video</span>
+                                        <span th:if="${inc.tipoEvidencia.name() == 'AUDIO'}">🎵 Ver Audio</span>
+                                    </a>
+                                </div>
+                                <span th:if="${inc.rutaArchivo == null}" style="color: #94a3b8; font-style: italic;">Sin evidencia</span>
+                            </td>
+                            <td th:id="'status-badge-cell-' + ${inc.id}">
+                                <span th:if="${inc.estado.name() == 'PENDIENTE'}" class="badge-status badge-pendiente">Pendiente</span>
+                                <span th:if="${inc.estado.name() == 'REVISADO'}" class="badge-status badge-revisado">Revisado</span>
+                                <span th:if="${inc.estado.name() == 'RESUELTO'}" class="badge-status badge-resuelto">Resuelto</span>
+                            </td>
+                            <td>
+                                <div class="actions-cell">
+                                    <button class="btn-action-blue" th:onclick="abrirDetalle([[${inc.id}]], [[${inc.historialAyuda.solicitud.id}]], [[${inc.reportadoPor.nombreCompleto}]], [[${inc.reportadoPor.rol}]], [[${inc.involucrado.nombreCompleto}]], [[${inc.involucrado.rol}]], [[${inc.descripcion}]], [[${inc.rutaArchivo}]], [[${inc.tipoEvidencia != null ? inc.tipoEvidencia.name() : ''}]], [[${inc.estado.name()}]], [[${inc.resolucion}]])">
+                                        🔍 Revisar
+                                    </button>
+                                    <button class="btn-action-red" th:onclick="eliminarIncidencia([[${inc.id}]])">
+                                        🗑️ Eliminar
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ================= MODAL: DETALLE/CAMBIAR ESTADO ================= -->
+        <div class="modal-overlay" id="modalDetalle">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span>🔍 Revisar Incidencia</span>
+                    <button class="modal-close" onclick="cerrarModal('modalDetalle')">✕</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="detIncidenciaId">
+                    
+                    <div class="detail-field">
+                        <strong>ID Incidencia:</strong> <span id="detId"></span>
+                    </div>
+                    <div class="detail-field">
+                        <strong>Código de Ayuda:</strong> <span id="detAyudaCodigo"></span>
+                    </div>
+                    <div class="detail-field">
+                        <strong>Reportado por:</strong> <span id="detReportadoPor"></span>
+                    </div>
+                    <div class="detail-field">
+                        <strong>Involucrado:</strong> <span id="detInvolucrado"></span>
+                    </div>
+                    <div class="detail-field">
+                        <strong>Descripción:</strong>
+                        <p id="detDescripcion" style="background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-top: 6px; white-space: pre-wrap; font-size: 0.9rem; color: #334155;"></p>
+                    </div>
+
+                    <div class="detail-field" id="detEvidenciaContainer">
+                        <strong>Evidencia Adjunta:</strong>
+                        <div id="detEvidenciaView" style="margin-top: 8px;"></div>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1.5px solid #e2e8f0; margin: 20px 0;">
+
+                    <div class="form-group">
+                        <label for="detEstado">Cambiar Estado:</label>
+                        <select id="detEstado" class="form-control">
+                            <option value="PENDIENTE">PENDIENTE</option>
+                            <option value="REVISADO">REVISADO</option>
+                            <option value="RESUELTO">RESUELTO</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="detResolucion">Resolución / Notas del Administrador (Máx. 500 caracteres):</label>
+                        <textarea id="detResolucion" class="form-control" rows="3" maxlength="500" placeholder="Escribe la resolución de la incidencia aquí..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-modal-cancel" onclick="cerrarModal('modalDetalle')">Cancelar</button>
+                    <button class="btn-modal-save" onclick="guardarCambioEstado()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOAST CONTAINER -->
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <div th:fragment="scripts">
+        <script>
+            // Toast helper
+            function showToast(message, type = 'success') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.innerHTML = (type === 'success' ? '✅ ' : '❌ ') + message;
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            }
+
+            // Filter Table Rows
+            function applyFilter(estado, btnId) {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(btnId).classList.add('active');
+
+                const rows = document.querySelectorAll('#incidenciasTableBody tr');
+                let countVisible = 0;
+
+                rows.forEach(row => {
+                    const rowEstado = row.getAttribute('data-estado');
+                    if (estado === 'ALL' || rowEstado === estado) {
+                        row.style.display = '';
+                        countVisible++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                const emptyState = document.getElementById('emptyStateMsg');
+                if (countVisible === 0) {
+                    if (!emptyState) {
+                        // Generate dynamic empty state if list gets empty
+                        const container = document.querySelector('.incidencias-card');
+                        container.innerHTML += `
+                            <div class="empty-state" id="emptyStateMsg">
+                                <span class="empty-state-icon" role="img">🛡️</span>
+                                <h3>Sin incidencias registradas</h3>
+                                <p>No se encontraron incidencias en este estado.</p>
+                            </div>
+                        `;
+                    } else {
+                        emptyState.style.display = 'block';
+                    }
+                } else {
+                    if (emptyState) {
+                        emptyState.style.display = 'none';
+                    }
+                }
+            }
+
+            // Modal Management
+            function abrirModal(id) {
+                document.getElementById(id).style.display = 'flex';
+            }
+            function cerrarModal(id) {
+                document.getElementById(id).style.display = 'none';
+            }
+
+            // Review / Edit state Modal
+            function abrirDetalle(id, ayudaId, reportadoPor, reportadoRol, involucrado, involucradoRol, descripcion, rutaArchivo, tipoEvidencia, estado, resolucion) {
+                document.getElementById('detIncidenciaId').value = id;
+                document.getElementById('detId').textContent = id;
+                document.getElementById('detAyudaCodigo').textContent = `#AY-${ayudaId}`;
+                document.getElementById('detReportadoPor').textContent = `${reportadoPor} (${reportadoRol})`;
+                document.getElementById('detInvolucrado').textContent = `${involucrado} (${involucradoRol})`;
+                document.getElementById('detDescripcion').textContent = descripcion;
+                document.getElementById('detEstado').value = estado;
+                document.getElementById('detResolucion').value = resolucion || '';
+
+                const evView = document.getElementById('detEvidenciaView');
+                const evContainer = document.getElementById('detEvidenciaContainer');
+
+                if (rutaArchivo) {
+                    evContainer.style.display = 'block';
+                    if (tipoEvidencia === 'FOTO') {
+                        evView.innerHTML = `<img src="${rutaArchivo}" alt="Evidencia" style="max-width:100%; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">`;
+                    } else if (tipoEvidencia === 'VIDEO') {
+                        evView.innerHTML = `
+                            <video src="${rutaArchivo}" controls style="max-width:100%; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                                Tu navegador no soporta reproducción de video.
+                            </video>
+                        `;
+                    } else if (tipoEvidencia === 'AUDIO') {
+                        evView.innerHTML = `
+                            <audio src="${rutaArchivo}" controls style="width:100%;">
+                                Tu navegador no soporta reproducción de audio.
+                            </audio>
+                        `;
+                    }
+                } else {
+                    evContainer.style.display = 'none';
+                    evView.innerHTML = '';
+                }
+
+                abrirModal('modalDetalle');
+            }
+
+            // Save state change
+            function guardarCambioEstado() {
+                const id = document.getElementById('detIncidenciaId').value;
+                const estado = document.getElementById('detEstado').value;
+                const resolucion = document.getElementById('detResolucion').value;
+
+                const formData = new FormData();
+                formData.append('id', id);
+                formData.append('estado', estado);
+                formData.append('resolucion', resolucion);
+
+                fetch('/admin/api/incidencia/cambiar-estado', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                .then(res => {
+                    if (res.status === 200) {
+                        showToast(res.body.mensaje, 'success');
+                        cerrarModal('modalDetalle');
+
+                        // Update table row dynamic data-attribute and badges
+                        const row = document.getElementById(`inc-row-${id}`);
+                        row.setAttribute('data-estado', estado);
+
+                        const badgeCell = document.getElementById(`status-badge-cell-${id}`);
+                        let badgeHtml = '';
+                        if (estado === 'PENDIENTE') {
+                            badgeHtml = '<span class="badge-status badge-pendiente">Pendiente</span>';
+                        } else if (estado === 'REVISADO') {
+                            badgeHtml = '<span class="badge-status badge-revisado">Revisado</span>';
+                        } else if (estado === 'RESUELTO') {
+                            badgeHtml = '<span class="badge-status badge-resuelto">Resuelto</span>';
+                        }
+                        badgeCell.innerHTML = badgeHtml;
+                    } else {
+                        showToast(res.body.error || 'Error al cambiar de estado', 'error');
+                    }
+                })
+                .catch(err => {
+                    showToast('Error de conexión', 'error');
+                    console.error(err);
+                });
+            }
+
+            // Delete incident
+            function eliminarIncidencia(id) {
+                if (!confirm('¿Estás seguro de que deseas eliminar esta incidencia permanentemente?')) {
+                    return;
+                }
+
+                fetch(`/admin/api/incidencia/eliminar?id=${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                .then(res => {
+                    if (res.status === 200) {
+                        showToast(res.body.mensaje, 'success');
+                        // Remove row from UI
+                        const row = document.getElementById(`inc-row-${id}`);
+                        row.remove();
+
+                        // Check if no rows left
+                        const rows = document.querySelectorAll('#incidenciasTableBody tr');
+                        if (rows.length === 0) {
+                            location.reload(); // Reload to show empty state
+                        }
+                    } else {
+                        showToast(res.body.error || 'Error al eliminar incidencia', 'error');
+                    }
+                })
+                .catch(err => {
+                    showToast('Error de conexión', 'error');
+                    console.error(err);
+                });
+            }
+        </script>
+    </div>
+</body>
+</html>
