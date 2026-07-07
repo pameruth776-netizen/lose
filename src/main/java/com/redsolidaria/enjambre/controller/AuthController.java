@@ -173,9 +173,13 @@ public class AuthController {
             // ✅ Enviar código de verificación
             verificacionService.enviarCodigo(email);
             
+            // ✅ Inicializar contador de seguridad: 3 intentos máximos
+            session.setAttribute("verificacionIntentos", 3);
+            
             model.addAttribute("email", email);
             model.addAttribute("nombreCompleto", nombres + " " + apellidos);
             model.addAttribute("tipoUsuario", "voluntario");
+            model.addAttribute("intentosRestantes", 3);
             
             return "verificar-codigo";
             
@@ -276,9 +280,13 @@ public class AuthController {
             // ✅ Enviar código de verificación
             verificacionService.enviarCodigo(dto.getEmail());
             
+            // ✅ Inicializar contador de seguridad: 3 intentos máximos
+            session.setAttribute("verificacionIntentos", 3);
+            
             model.addAttribute("email", dto.getEmail());
             model.addAttribute("nombreCompleto", dto.getNombres() + " " + dto.getApellidos());
             model.addAttribute("tipoUsuario", "discapacitado");
+            model.addAttribute("intentosRestantes", 3);
             
             return "verificar-codigo";
             
@@ -326,12 +334,37 @@ public class AuthController {
     public String verificarCodigo(@RequestParam String email,
                                    @RequestParam String codigo,
                                    @RequestParam String tipoUsuario,
+                                   @RequestParam(required = false, defaultValue = "false") String tiempoExpirado,
                                    HttpSession session,
                                    Model model) {
-        
+
+        // ── Seguridad: verificar si el tiempo expiró (enviado desde el frontend) ──
+        if ("true".equals(tiempoExpirado)) {
+            // Limpiar sesión de registro temporal
+            session.removeAttribute("registroTempVol");
+            session.removeAttribute("registroTempDis");
+            session.removeAttribute("verificacionIntentos");
+            return "redirect:/registro?expired=1";
+        }
+
+        // ── Seguridad: verificar intentos restantes ─────────────────────────────
+        Integer intentosRestantes = (Integer) session.getAttribute("verificacionIntentos");
+        if (intentosRestantes == null) intentosRestantes = 3; // fallback
+
+        if (intentosRestantes <= 0) {
+            // Sin intentos disponibles: limpiar sesión y redirigir
+            session.removeAttribute("registroTempVol");
+            session.removeAttribute("registroTempDis");
+            session.removeAttribute("verificacionIntentos");
+            return "redirect:/registro?expired=1";
+        }
+
         boolean valido = verificacionService.verificarCodigo(email, codigo);
         
         if (valido) {
+            // ✅ Limpiar contador de intentos
+            session.removeAttribute("verificacionIntentos");
+
             // ✅ Recuperar datos temporales de la sesión y guardar en BD con verificado = TRUE
             if ("voluntario".equals(tipoUsuario)) {
                 RegistroTemporalVoluntario temp = (RegistroTemporalVoluntario) session.getAttribute("registroTempVol");
@@ -349,6 +382,7 @@ public class AuthController {
                         session.removeAttribute("registroTempVol");
                     } catch (Exception e) {
                         model.addAttribute("error", "Error al guardar usuario: " + e.getMessage());
+                        model.addAttribute("intentosRestantes", intentosRestantes);
                         return "verificar-codigo";
                     }
                 }
@@ -368,6 +402,7 @@ public class AuthController {
                         session.removeAttribute("registroTempDis");
                     } catch (Exception e) {
                         model.addAttribute("error", "Error al guardar usuario: " + e.getMessage());
+                        model.addAttribute("intentosRestantes", intentosRestantes);
                         return "verificar-codigo";
                     }
                 }
@@ -376,9 +411,27 @@ public class AuthController {
             model.addAttribute("mensaje", "✅ ¡Código verificado con éxito! Tu cuenta está en revisión por el administrador. Te notificaremos por correo una vez activa.");
             return "login";
         } else {
-            model.addAttribute("error", "❌ Código inválido o expirado. Vuelve a intentarlo.");
+            // ── Descontar un intento ────────────────────────────────────────────
+            int nuevosIntentos = intentosRestantes - 1;
+            session.setAttribute("verificacionIntentos", nuevosIntentos);
+
+            if (nuevosIntentos <= 0) {
+                // Agotó los 3 intentos: limpiar sesión y redirigir al registro
+                session.removeAttribute("registroTempVol");
+                session.removeAttribute("registroTempDis");
+                session.removeAttribute("verificacionIntentos");
+                return "redirect:/registro?expired=1";
+            }
+
+            // Quedan intentos: mostrar error con contador actualizado
+            String msgError = nuevosIntentos == 1
+                ? "❌ Código inválido. ¡Cuidado! Te queda solo 1 intento."
+                : "❌ Código inválido. Te quedan " + nuevosIntentos + " intentos.";
+
+            model.addAttribute("error", msgError);
             model.addAttribute("email", email);
             model.addAttribute("tipoUsuario", tipoUsuario);
+            model.addAttribute("intentosRestantes", nuevosIntentos);
             return "verificar-codigo";
         }
     }
