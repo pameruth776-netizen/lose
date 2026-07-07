@@ -7,7 +7,7 @@
     <div th:fragment="content" class="historial-container">
         <style>
             .historial-container {
-                max-width: 1100px;
+                max-width: 1000px;
                 margin: 40px auto;
                 padding: 0 20px;
                 font-family: 'Outfit', 'Inter', sans-serif;
@@ -59,6 +59,7 @@
                 line-height: 1.5;
             }
             
+            /* Glassmorphism Card style */
             .historial-card {
                 background: rgba(255, 255, 255, 0.95);
                 backdrop-filter: blur(10px);
@@ -73,6 +74,7 @@
                 box-shadow: 0 15px 35px rgba(0, 0, 0, 0.07);
             }
             
+            /* Table Styling */
             .table-responsive {
                 width: 100%;
                 overflow-x: auto;
@@ -83,21 +85,21 @@
                 width: 100%;
                 border-collapse: collapse;
                 text-align: left;
-                min-width: 800px;
+                min-width: 560px;
             }
             .historial-table th {
                 background: rgba(249, 115, 22, 0.06);
                 color: #1e3a8a;
                 font-weight: 700;
                 font-size: 0.95rem;
-                padding: 18px 20px;
+                padding: 18px 24px;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
                 border-bottom: 2px solid rgba(249, 115, 22, 0.1);
                 white-space: nowrap;
             }
             .historial-table td {
-                padding: 18px 20px;
+                padding: 18px 24px;
                 border-bottom: 1px solid rgba(0, 0, 0, 0.05);
                 color: #4b5563;
                 font-size: 0.98rem;
@@ -111,6 +113,7 @@
                 border-bottom: none;
             }
             
+            /* Badge styles */
             .badge-status {
                 display: inline-flex;
                 align-items: center;
@@ -127,7 +130,23 @@
                 color: #059669;
                 border: 1px solid rgba(16, 185, 129, 0.25);
             }
+            .badge-pendiente {
+                background: rgba(245, 158, 11, 0.15);
+                color: #d97706;
+                border: 1px solid rgba(245, 158, 11, 0.25);
+            }
+            .badge-revision {
+                background: rgba(59, 130, 246, 0.15);
+                color: #2563eb;
+                border: 1px solid rgba(59, 130, 246, 0.25);
+            }
+            .badge-resuelto {
+                background: rgba(16, 185, 129, 0.15);
+                color: #059669;
+                border: 1px solid rgba(16, 185, 129, 0.25);
+            }
             
+            /* User Info Layout */
             .user-cell {
                 display: flex;
                 align-items: center;
@@ -157,204 +176,7 @@
                 margin-top: 2px;
             }
             
-            .btn-action-green {
-                background: linear-gradient(135deg, #3AAA6B 0%, #2e8755 100%);
-                color: white;
-                border: none;
-                padding: 8px 12px;
-                border-radius: 8px;
-                font-weight: 600;
-                font-size: 0.85rem;
-                cursor: pointer;
-                display: inline-flex;
-                align-items: center;
-                gap: 4px;
-                transition: transform 0.2s, box-shadow 0.2s;
-                box-shadow: 0 4px 10px rgba(58, 170, 107, 0.2);
-            }
-            .btn-action-green:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 6px 14px rgba(58, 170, 107, 0.3);
-            }
-            .btn-action-red {
-                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-                color: white;
-                border: none;
-                padding: 8px 12px;
-                border-radius: 8px;
-                font-weight: 600;
-                font-size: 0.85rem;
-                cursor: pointer;
-                display: inline-flex;
-                align-items: center;
-                gap: 4px;
-                transition: transform 0.2s, box-shadow 0.2s;
-                box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
-            }
-            .btn-action-red:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 6px 14px rgba(239, 68, 68, 0.3);
-            }
-            
-            .actions-cell {
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
-            }
-            
-            /* Custom Modals */
-            .modal-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(15, 23, 42, 0.6);
-                backdrop-filter: blur(4px);
-                display: none;
-                align-items: center;
-                justify-content: center;
-                z-index: 2000;
-                padding: 16px;
-            }
-            .modal-content {
-                background: white;
-                border-radius: 20px;
-                width: 100%;
-                max-width: 500px;
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-                overflow: hidden;
-                animation: slideUp 0.3s ease-out;
-            }
-            .modal-header {
-                padding: 20px 24px;
-                color: white;
-                font-weight: 800;
-                font-size: 1.25rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .modal-header-green { background: linear-gradient(135deg, #3AAA6B 0%, #2e8755 100%); }
-            .modal-header-red { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
-            
-            .modal-close {
-                background: none;
-                border: none;
-                color: white;
-                font-size: 1.5rem;
-                cursor: pointer;
-                line-height: 1;
-            }
-            .modal-body {
-                padding: 24px;
-            }
-            .modal-body p {
-                margin-top: 0;
-                color: #4b5563;
-                font-size: 0.95rem;
-                line-height: 1.5;
-            }
-            
-            .form-group {
-                margin-bottom: 16px;
-            }
-            .form-group label {
-                display: block;
-                font-weight: 700;
-                font-size: 0.85rem;
-                color: #334155;
-                margin-bottom: 6px;
-            }
-            .form-control {
-                width: 100%;
-                border: 1.5px solid #cbd5e1;
-                border-radius: 10px;
-                padding: 10px 12px;
-                font-family: inherit;
-                font-size: 0.95rem;
-                color: #1e293b;
-                transition: border-color 0.2s;
-                resize: none;
-            }
-            .form-control:focus {
-                outline: none;
-                border-color: #3AAA6B;
-            }
-            .form-control-red:focus {
-                border-color: #ef4444;
-            }
-            
-            .modal-footer {
-                padding: 16px 24px;
-                background: #f8fafc;
-                display: flex;
-                justify-content: flex-end;
-                gap: 12px;
-                border-top: 1px solid #e2e8f0;
-            }
-            .btn-modal-save {
-                border: none;
-                padding: 10px 20px;
-                border-radius: 10px;
-                font-weight: 700;
-                font-size: 0.9rem;
-                cursor: pointer;
-                color: white;
-            }
-            .btn-modal-save-green { background: linear-gradient(135deg, #3AAA6B 0%, #2e8755 100%); }
-            .btn-modal-save-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-            
-            .btn-modal-cancel {
-                background: #e2e8f0;
-                color: #475569;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 10px;
-                font-weight: 700;
-                font-size: 0.9rem;
-                cursor: pointer;
-            }
-            
-            /* Toast Notifications */
-            .toast-container {
-                position: fixed;
-                bottom: 24px;
-                right: 24px;
-                z-index: 3000;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-            .toast {
-                background: #1e293b;
-                color: white;
-                padding: 12px 20px;
-                border-radius: 10px;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-                font-weight: 600;
-                font-size: 0.9rem;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                opacity: 0;
-                transform: translateY(20px);
-                animation: toastIn 0.3s forwards, toastOut 0.3s 3.5s forwards;
-            }
-            .toast.toast-success { border-left: 4px solid #3AAA6B; }
-            .toast.toast-error { border-left: 4px solid #ef4444; }
-            
-            @keyframes slideUp {
-                from { transform: translateY(40px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-            @keyframes toastIn {
-                to { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes toastOut {
-                to { opacity: 0; transform: translateY(-20px); }
-            }
-            
+            /* Empty State */
             .empty-state {
                 text-align: center;
                 padding: 50px 20px;
@@ -385,6 +207,7 @@
                 100% { transform: translateY(0px); }
             }
 
+            /* ===== TABLET (≤768px) ===== */
             @media (max-width: 768px) {
                 .historial-container {
                     margin: 24px auto;
@@ -393,13 +216,65 @@
                 .historial-title {
                     font-size: 1.7rem;
                 }
+                .historial-subtitle {
+                    font-size: 0.92rem;
+                }
                 .historial-card {
                     padding: 20px;
                     border-radius: 18px;
                 }
+                .historial-table th,
+                .historial-table td {
+                    padding: 14px 16px;
+                    font-size: 0.9rem;
+                }
             }
 
+            /* ===== MÓVIL (≤600px) — tabla → tarjetas ===== */
             @media (max-width: 600px) {
+                .historial-container {
+                    margin: 16px auto;
+                    padding: 0 12px;
+                }
+                .historial-header {
+                    gap: 12px;
+                    margin-bottom: 20px;
+                    padding-bottom: 16px;
+                }
+                .historial-header-icon {
+                    width: 46px;
+                    height: 46px;
+                    min-width: 46px;
+                    border-radius: 12px;
+                }
+                .historial-header-icon svg {
+                    width: 22px;
+                    height: 22px;
+                }
+                .historial-title {
+                    font-size: 1.35rem;
+                }
+                .historial-subtitle {
+                    font-size: 0.85rem;
+                }
+                .historial-card {
+                    padding: 16px;
+                    border-radius: 16px;
+                }
+                .empty-state {
+                    padding: 30px 12px;
+                }
+                .empty-state-icon {
+                    font-size: 3rem;
+                }
+                .empty-state h3 {
+                    font-size: 1.2rem;
+                }
+                .empty-state p {
+                    font-size: 0.9rem;
+                }
+
+                /* Ocultar tabla clásica y mostrar tarjetas */
                 .table-responsive {
                     overflow-x: visible;
                 }
@@ -417,6 +292,13 @@
                     margin-bottom: 14px;
                     padding: 16px;
                     border: 1px solid rgba(249,115,22,0.12);
+                    transition: box-shadow 0.2s;
+                }
+                .historial-table tbody tr:hover {
+                    box-shadow: 0 4px 20px rgba(249,115,22,0.13);
+                }
+                .historial-table tbody tr:last-child {
+                    margin-bottom: 0;
                 }
                 .historial-table td {
                     display: flex;
@@ -441,6 +323,170 @@
                     min-width: 100px;
                     flex-shrink: 0;
                 }
+                .historial-table td .user-cell {
+                    justify-content: flex-end;
+                }
+                .user-avatar {
+                    width: 36px;
+                    height: 36px;
+                    min-width: 36px;
+                    font-size: 0.95rem;
+                }
+                /* Dirección en móvil: texto alineado a la derecha */
+                .historial-table td[data-label="Dirección"] div {
+                    max-width: 160px;
+                    text-align: right;
+                }
+            }
+
+            /* ===== MÓVIL MUY PEQUEÑO (≤380px) ===== */
+            @media (max-width: 380px) {
+                .historial-title {
+                    font-size: 1.15rem;
+                }
+                .historial-table td::before {
+                    min-width: 80px;
+                    font-size: 0.7rem;
+                }
+                .historial-card {
+                    padding: 12px;
+                }
+            }
+
+            /* ===== ESTILOS ADICIONALES PARA CALIFICACION Y MODALES ===== */
+            .btn-action {
+                padding: 6px 14px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 700;
+                cursor: pointer;
+                border: none;
+                transition: all 0.2s;
+                color: white;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .btn-green {
+                background: #10B981;
+            }
+            .btn-green:hover {
+                background: #059669;
+                transform: translateY(-1px);
+            }
+            .btn-red {
+                background: #EF4444;
+            }
+            .btn-red:hover {
+                background: #DC2626;
+                transform: translateY(-1px);
+            }
+
+            /* Estilos de Modales Premium */
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(15, 23, 42, 0.6);
+                backdrop-filter: blur(8px);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            .modal-overlay.active {
+                display: flex;
+                opacity: 1;
+            }
+            .modal-box {
+                background: #ffffff;
+                border-radius: 24px;
+                padding: 32px;
+                width: 90%;
+                max-width: 500px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+                transform: scale(0.9);
+                transition: transform 0.3s ease;
+                border: 1px solid rgba(255, 255, 255, 0.8);
+            }
+            .modal-overlay.active .modal-box {
+                transform: scale(1);
+            }
+            .modal-title {
+                font-size: 1.35rem;
+                font-weight: 800;
+                color: #1e3a8a;
+                margin-top: 0;
+                margin-bottom: 16px;
+                line-height: 1.4;
+            }
+            .modal-textarea {
+                width: 100%;
+                height: 120px;
+                padding: 12px;
+                border-radius: 12px;
+                border: 1.5px solid #e2e8f0;
+                font-family: inherit;
+                font-size: 0.95rem;
+                resize: none;
+                margin-bottom: 16px;
+                box-sizing: border-box;
+                transition: border-color 0.2s;
+            }
+            .modal-textarea:focus {
+                outline: none;
+                border-color: #f97316;
+            }
+            .modal-file-label {
+                display: block;
+                font-weight: 700;
+                font-size: 0.88rem;
+                color: #475569;
+                margin-bottom: 8px;
+            }
+            .modal-file-input {
+                width: 100%;
+                margin-bottom: 20px;
+                font-family: inherit;
+            }
+            .modal-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 12px;
+            }
+            .btn-modal {
+                padding: 10px 20px;
+                border-radius: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.2s;
+                border: none;
+                font-size: 0.9rem;
+            }
+            .btn-modal-cancel {
+                background: #f1f5f9;
+                color: #475569;
+            }
+            .btn-modal-cancel:hover {
+                background: #e2e8f0;
+            }
+            .btn-modal-submit {
+                background: #10B981;
+                color: white;
+            }
+            .btn-modal-submit:hover {
+                background: #059669;
+            }
+            .btn-modal-danger {
+                background: #EF4444;
+                color: white;
+            }
+            .btn-modal-danger:hover {
+                background: #DC2626;
             }
         </style>
 
@@ -472,8 +518,8 @@
                         <tr>
                             <th>Código</th>
                             <th>Persona Asistida</th>
-                            <th>Dirección</th>
                             <th>Fecha y Hora</th>
+                            <th>Calificación</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
@@ -491,12 +537,14 @@
                                 </div>
                                 <span th:if="${h.solicitud.discapacitado == null}" style="color: #9ca3af; font-style: italic;">No disponible</span>
                             </td>
-                            <td data-label="Dirección">
-                                <div style="max-width: 220px; word-wrap: break-word; font-size: 0.92rem; color: #4b5563;"
-                                     th:text="${h.solicitud.discapacitado != null ? h.solicitud.discapacitado.direccion : '—'}">Av. Arequipa 1234</div>
-                            </td>
                             <td data-label="Fecha y Hora">
                                 <span th:text="${#temporals.format(h.fechaFinalizacion, 'dd/MM/yyyy hh:mm a')}">08/06/2026 04:30 PM</span>
+                            </td>
+                            <td data-label="Calificación">
+                                <span th:if="${h.calificacion == 'SIN_CALIFICAR' || h.calificacion == null}" style="color: #9ca3af; font-style: italic;">Sin calificar</span>
+                                <span th:if="${h.calificacion == 'MEDALLA_ORO' || h.calificacion == 'Oro'}" class="badge-status" style="background: rgba(254, 240, 138, 0.3); color: #854d0e; border: 1px solid rgba(254, 240, 138, 0.5); font-weight: bold; font-size: 0.82rem; padding: 4px 10px; border-radius: 20px;">Medalla de oro 🥇</span>
+                                <span th:if="${h.calificacion == 'MEDALLA_PLATA' || h.calificacion == 'Plata'}" class="badge-status" style="background: rgba(243, 244, 246, 0.3); color: #4b5563; border: 1px solid rgba(243, 244, 246, 0.5); font-weight: bold; font-size: 0.82rem; padding: 4px 10px; border-radius: 20px;">Medalla de plata 🥈</span>
+                                <span th:if="${h.calificacion == 'MEDALLA_COBRE' || h.calificacion == 'Cobre'}" class="badge-status" style="background: rgba(254, 215, 170, 0.3); color: #c2410c; border: 1px solid rgba(254, 215, 170, 0.5); font-weight: bold; font-size: 0.82rem; padding: 4px 10px; border-radius: 20px;">Medalla de cobre 🥉</span>
                             </td>
                             <td data-label="Estado">
                                 <span class="badge-status badge-finalizada">
@@ -507,13 +555,11 @@
                                 </span>
                             </td>
                             <td data-label="Acciones">
-                                <div class="actions-cell">
-                                    <button class="btn-action-green" th:onclick="abrirComentar([[${h.id}]])">
-                                        💬 Comentar
-                                    </button>
-                                    <button class="btn-action-red" th:onclick="abrirIncidente([[${h.id}]])">
-                                        ⚠️ Incidente
-                                    </button>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                                    <!-- Botón comentar si aún no comentó -->
+                                    <button th:if="${!h.comentadoVoluntario}" class="btn-action btn-green" th:onclick="'abrirModalComentar(' + ${h.id} + ')'">Comentar</button>
+                                    <!-- Ya comentó -->
+                                    <span th:if="${h.comentadoVoluntario}" style="color: #16a34a; font-weight: 700; font-size: 0.88rem;">✅ Mensaje enviado</span>
                                 </div>
                             </td>
                         </tr>
@@ -522,216 +568,97 @@
             </div>
         </div>
 
-        <!-- ================= MODAL: COMENTAR ================= -->
-        <div class="modal-overlay" id="modalComentar">
-            <div class="modal-content">
-                <div class="modal-header modal-header-green">
-                    <span>💬 Dejar un Comentario</span>
-                    <button class="modal-close" onclick="cerrarModal('modalComentar')">✕</button>
-                </div>
-                <div class="modal-body">
-                    <p>Comparte un consejo positivo o mensaje para la persona con discapacidad:</p>
-                    <input type="hidden" id="comentHistorialId">
-                    <div class="form-group">
-                        <textarea class="form-control" id="comentTexto" maxlength="500" rows="4" placeholder="Escribe tu consejo o mensaje..."></textarea>
-                        <div style="text-align: right; font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">
-                            <span id="comentCharCount">0</span>/500 caracteres
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-modal-cancel" onclick="cerrarModal('modalComentar')">Cancelar</button>
-                    <button class="btn-modal-save btn-modal-save-green" onclick="enviarComentario()">Enviar Comentario</button>
-                </div>
+    <!-- Modal Comentar -->
+    <div id="modalComentar" class="modal-overlay">
+        <div class="modal-box">
+            <h3 class="modal-title">¿Desea dejarle un mensaje a la persona que ayudó?</h3>
+            <input type="hidden" id="comentarioHistorialId">
+            <textarea id="comentarioTexto" class="modal-textarea" placeholder="Escribe tu mensaje aquí..."></textarea>
+            <div class="modal-actions">
+                <button class="btn-modal btn-modal-cancel" onclick="cerrarModalComentar()">Cancelar</button>
+                <button class="btn-modal btn-modal-submit" onclick="enviarComentario()">Enviar</button>
             </div>
         </div>
-
-        <!-- ================= MODAL: INCIDENCIAS ================= -->
-        <div class="modal-overlay" id="modalIncidente">
-            <div class="modal-content">
-                <div class="modal-header modal-header-red">
-                    <span>⚠️ Reportar Incidente</span>
-                    <button class="modal-close" onclick="cerrarModal('modalIncidente')">✕</button>
-                </div>
-                <div class="modal-body">
-                    <p>Describe el problema ocurrido durante la ayuda:</p>
-                    <input type="hidden" id="incidHistorialId">
-                    
-                    <div class="form-group">
-                        <textarea class="form-control form-control-red" id="incidDescripcion" maxlength="1000" rows="4" placeholder="Describe detalladamente lo sucedido..."></textarea>
-                        <div style="text-align: right; font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">
-                            <span id="incidCharCount">0</span>/1000 caracteres
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="incidEvidencia">Subir evidencia (Foto, Video o Audio):</label>
-                        <input type="file" id="incidEvidencia" class="form-control" accept="image/*,video/*,audio/*">
-                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 6px; line-height: 1.4;">
-                            • 📷 Foto (jpg, png, gif) - máx. 5MB<br>
-                            • 🎥 Video (mp4, avi) - máx. 20MB<br>
-                            • 🎵 Audio (mp3, wav) - máx. 10MB
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-modal-cancel" onclick="cerrarModal('modalIncidente')">Cancelar</button>
-                    <button class="btn-modal-save btn-modal-save-red" onclick="enviarIncidencia()">Enviar Reporte</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- TOAST CONTAINER -->
-        <div class="toast-container" id="toastContainer"></div>
     </div>
 
-    <!-- SCRIPTS -->
-    <div th:fragment="scripts">
-        <script>
-            // Char Counters
-            document.getElementById('comentTexto').addEventListener('input', function() {
-                document.getElementById('comentCharCount').textContent = this.value.length;
+    
+
+    
+
+    <script>
+        // Abrir/Cerrar Modal Comentar
+        function abrirModalComentar(id) {
+            document.getElementById('comentarioHistorialId').value = id;
+            document.getElementById('comentarioTexto').value = '';
+            document.getElementById('modalComentar').classList.add('active');
+        }
+        function cerrarModalComentar() {
+            document.getElementById('modalComentar').classList.remove('active');
+        }
+
+        // Enviar Comentario
+        function enviarComentario() {
+            const id = document.getElementById('comentarioHistorialId').value;
+            const comentario = document.getElementById('comentarioTexto').value;
+            if (!comentario.trim()) {
+                mostrarToast("Por favor, escribe un comentario.");
+                return;
+            }
+
+            fetch('/api/ayuda/comentar-voluntario', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ historialId: id, comentario: comentario })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarToast("¡Comentario enviado!");
+                    cerrarModalComentar();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    mostrarToast("Error: " + data.error);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                mostrarToast("Error de red.");
             });
-            document.getElementById('incidDescripcion').addEventListener('input', function() {
-                document.getElementById('incidCharCount').textContent = this.value.length;
-            });
+        }
 
-            // Toast helper
-            function showToast(message, type = 'success') {
-                const container = document.getElementById('toastContainer');
-                const toast = document.createElement('div');
-                toast.className = `toast toast-${type}`;
-                toast.innerHTML = (type === 'success' ? '✅ ' : '❌ ') + message;
-                container.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
+        // Toast de notificación simple
+        function mostrarToast(mensaje) {
+            let toast = document.getElementById('custom-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'custom-toast';
+                toast.style.position = 'fixed';
+                toast.style.bottom = '20px';
+                toast.style.left = '50%';
+                toast.style.transform = 'translateX(-50%) translateY(100px)';
+                toast.style.backgroundColor = '#1e293b';
+                toast.style.color = '#ffffff';
+                toast.style.padding = '12px 24px';
+                toast.style.borderRadius = '30px';
+                toast.style.fontFamily = 'Outfit, sans-serif';
+                toast.style.fontSize = '0.95rem';
+                toast.style.fontWeight = '700';
+                toast.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+                toast.style.transition = 'transform 0.3s ease';
+                toast.style.zIndex = '9999';
+                document.body.appendChild(toast);
             }
-
-            // Modal Management
-            function abrirModal(id) {
-                document.getElementById(id).style.display = 'flex';
-            }
-            function cerrarModal(id) {
-                document.getElementById(id).style.display = 'none';
-                if (id === 'modalComentar') {
-                    document.getElementById('comentTexto').value = '';
-                    document.getElementById('comentCharCount').textContent = '0';
-                } else if (id === 'modalIncidente') {
-                    document.getElementById('incidDescripcion').value = '';
-                    document.getElementById('incidCharCount').textContent = '0';
-                    document.getElementById('incidEvidencia').value = '';
-                }
-            }
-
-            // Comentar Modal Open
-            function abrirComentar(historialId) {
-                document.getElementById('comentHistorialId').value = historialId;
-                abrirModal('modalComentar');
-            }
-
-            // AJAX Save Comment (Volunteer)
-            function enviarComentario() {
-                const historialId = document.getElementById('comentHistorialId').value;
-                const comentario = document.getElementById('comentTexto').value;
-
-                if (!comentario.trim()) {
-                    showToast('Por favor, escribe un comentario.', 'error');
-                    return;
-                }
-
-                const formData = new FormData();
-                formData.append('historialId', historialId);
-                formData.append('comentario', comentario);
-
-                fetch('/voluntario/api/comentar', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json().then(data => ({ status: response.status, body: data })))
-                .then(res => {
-                    if (res.status === 200) {
-                        showToast(res.body.mensaje, 'success');
-                        cerrarModal('modalComentar');
-                    } else {
-                        showToast(res.body.error || 'Error al enviar comentario', 'error');
-                    }
-                })
-                .catch(err => {
-                    showToast('Error de conexión', 'error');
-                    console.error(err);
-                });
-            }
-
-            // Incidente Modal Open
-            function abrirIncidente(historialId) {
-                document.getElementById('incidHistorialId').value = historialId;
-                abrirModal('modalIncidente');
-            }
-
-            // AJAX Save Incident with evidence (Volunteer)
-            function enviarIncidencia() {
-                const historialId = document.getElementById('incidHistorialId').value;
-                const descripcion = document.getElementById('incidDescripcion').value;
-                const fileInput = document.getElementById('incidEvidencia');
-                const file = fileInput.files[0];
-
-                if (!descripcion.trim()) {
-                    showToast('Por favor, describe la incidencia.', 'error');
-                    return;
-                }
-
-                if (file) {
-                    const size = file.size;
-                    const extension = file.name.substring(file.name.lastIndexOf('.') + 1).toLowerCase();
-                    
-                    if (file.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
-                        if (size > 5 * 1024 * 1024) {
-                            showToast('La foto supera el límite de 5MB.', 'error');
-                            return;
-                        }
-                    } else if (file.type.startsWith('video/') || ['mp4', 'avi', 'mov'].includes(extension)) {
-                        if (size > 20 * 1024 * 1024) {
-                            showToast('El video supera el límite de 20MB.', 'error');
-                            return;
-                        }
-                    } else if (file.type.startsWith('audio/') || ['mp3', 'wav', 'm4a'].includes(extension)) {
-                        if (size > 10 * 1024 * 1024) {
-                            showToast('El audio supera el límite de 10MB.', 'error');
-                            return;
-                        }
-                    } else {
-                        showToast('Tipo de archivo no permitido.', 'error');
-                        return;
-                    }
-                }
-
-                const formData = new FormData();
-                formData.append('historialId', historialId);
-                formData.append('descripcion', descripcion);
-                if (file) {
-                    formData.append('evidencia', file);
-                }
-
-                showToast('Subiendo reporte de incidencia...', 'success');
-
-                fetch('/voluntario/api/incidencia', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json().then(data => ({ status: response.status, body: data })))
-                .then(res => {
-                    if (res.status === 200) {
-                        showToast(res.body.mensaje, 'success');
-                        cerrarModal('modalIncidente');
-                    } else {
-                        showToast(res.body.error || 'Error al registrar incidencia', 'error');
-                    }
-                })
-                .catch(err => {
-                    showToast('Error de conexión', 'error');
-                    console.error(err);
-                });
-            }
-        </script>
+            toast.textContent = mensaje;
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+            setTimeout(() => {
+                toast.style.transform = 'translateX(-50%) translateY(100px)';
+            }, 3000);
+        }
+    </script>
     </div>
 </body>
 </html>

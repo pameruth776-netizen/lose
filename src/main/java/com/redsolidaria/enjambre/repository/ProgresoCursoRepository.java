@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface ProgresoCursoRepository extends JpaRepository<ProgresoCurso, Long> {
     Optional<ProgresoCurso> findByVoluntarioIdAndCursoId(Long voluntarioId, Long cursoId);
     List<ProgresoCurso> findByVoluntarioId(Long voluntarioId);
+    void deleteByVoluntarioId(Long voluntarioId);
 }
