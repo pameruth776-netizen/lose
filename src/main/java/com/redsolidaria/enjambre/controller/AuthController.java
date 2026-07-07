@@ -75,7 +75,8 @@ public class AuthController {
                                               HttpSession session,
                                               Model model) {
         
-        String lowerEmail = email.toLowerCase();
+        email = email != null ? email.trim().toLowerCase() : "";
+        String lowerEmail = email;
         if (!lowerEmail.matches("^u\\d{8}@utp\\.edu\\.pe$")) {
             model.addAttribute("error", "Debes usar tu correo institucional con el formato u12345678@utp.edu.pe");
             return "registroVol";
@@ -196,6 +197,9 @@ public class AuthController {
                                                 HttpSession session,
                                                 Model model) {
         
+        if (dto.getEmail() != null) {
+            dto.setEmail(dto.getEmail().trim().toLowerCase());
+        }
         // Validar que las contraseñas coinciden
         if (!dto.isPasswordMatching()) {
             result.rejectValue("confirmPassword", "error", "Las contraseñas no coinciden");
@@ -326,6 +330,46 @@ public class AuthController {
         return "/uploads/documentos/" + nombreArchivo;
     }
 
+    @GetMapping("/verificar-codigo")
+    public String mostrarVerificarCodigo(HttpSession session, Model model) {
+        String email = null;
+        String tipoUsuario = null;
+        
+        RegistroTemporalVoluntario tempVol = (RegistroTemporalVoluntario) session.getAttribute("registroTempVol");
+        RegistroTemporalDiscapacitado tempDis = (RegistroTemporalDiscapacitado) session.getAttribute("registroTempDis");
+        
+        if (tempVol != null) {
+            email = tempVol.getEmail();
+            tipoUsuario = "voluntario";
+        } else if (tempDis != null) {
+            email = tempDis.getEmail();
+            tipoUsuario = "discapacitado";
+        }
+        
+        if (email == null) {
+            return "redirect:/registro";
+        }
+        
+        Long startTime = (Long) session.getAttribute("verificacion_startTime");
+        if (startTime == null) {
+            return "redirect:/registro";
+        }
+        
+        long elapsed = System.currentTimeMillis() - startTime;
+        long remaining = 90 - (elapsed / 1000);
+        
+        if (remaining <= 0) {
+            session.invalidate();
+            return "redirect:/";
+        }
+        
+        model.addAttribute("email", email);
+        model.addAttribute("tipoUsuario", tipoUsuario);
+        model.addAttribute("tiempoRestante", remaining);
+        
+        return "verificar-codigo";
+    }
+
     // ========== VERIFICAR CÓDIGO (AQUÍ SE GUARDA EN BD CON verificado = TRUE) ==========
     
     @PostMapping("/verificar-codigo")
@@ -335,6 +379,7 @@ public class AuthController {
                                    HttpSession session,
                                    Model model) {
         
+        email = email != null ? email.trim().toLowerCase() : "";
         Long startTime = (Long) session.getAttribute("verificacion_startTime");
         if (startTime == null) {
             session.invalidate();
@@ -438,6 +483,7 @@ public class AuthController {
                                 HttpSession session,
                                 Model model) {
         
+        email = email != null ? email.trim().toLowerCase() : "";
         Usuario usuario = usuarioService.buscarPorEmail(email);
         
         if (usuario == null) {
