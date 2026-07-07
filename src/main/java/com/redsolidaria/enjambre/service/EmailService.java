@@ -144,15 +144,72 @@ public class EmailService {
     }
 
     @Async
-    public void enviarNotificacionCalificacion(String emailDestino, String nombreVoluntario, String medalla, String comentario) {
-        String comentarioTexto = (comentario != null && !comentario.trim().isEmpty()) ? 
-                "\nComentario de la persona asistida: \"" + comentario + "\"" : "";
-        String text = "Hola " + nombreVoluntario + ",\n\n" +
-                        "¡Has recibido una nueva calificación en la plataforma!\n" +
-                        "Medalla otorgada: " + medalla + "\n" +
-                        comentarioTexto + "\n\n" +
-                        "¡Muchas gracias por tu valioso apoyo en la comunidad de Red Solidaria UTP!\n\n" +
-                        "Saludos,\nEquipo Red Solidaria UTP";
-        sendEmailViaBrevo(emailDestino, "🥇 ¡Has recibido una nueva calificación! - Red Solidaria UTP", text);
+    public void enviarComentarioAVoluntario(String emailVoluntario, String nombreDiscapacitado,
+                                             String calificacion, String comentario) {
+        String medalla = calificacion != null ? switch (calificacion) {
+            case "Oro"   -> "🥇 Oro";
+            case "Plata" -> "🥈 Plata";
+            case "Cobre" -> "🥉 Cobre";
+            default -> calificacion;
+        } : "Sin calificación";
+        String text = "Hola,\n\n" +
+                      "El beneficiario " + nombreDiscapacitado + " te ha dejado un comentario sobre la asistencia brindada:\n\n" +
+                      "📝 Comentario: " + comentario + "\n" +
+                      "⭐ Calificación: " + medalla + "\n\n" +
+                      "Gracias por tu valiosa labor como voluntario.\n\n" +
+                      "Saludos,\nEquipo Red Solidaria UTP";
+        sendEmailViaBrevo(emailVoluntario, "💬 Nuevo comentario de un beneficiario - Red Solidaria UTP", text);
+    }
+
+    @Async
+    public void enviarComentarioADiscapacitado(String emailDiscapacitado, String nombreVoluntario,
+                                               String comentario) {
+        String text = "Hola,\n\n" +
+                      "El voluntario " + nombreVoluntario + " te ha dejado un mensaje sobre la asistencia que te brindó:\n\n" +
+                      "📝 Mensaje: " + comentario + "\n\n" +
+                      "Saludos,\nEquipo Red Solidaria UTP";
+        sendEmailViaBrevo(emailDiscapacitado, "💬 Mensaje de tu voluntario - Red Solidaria UTP", text);
+    }
+
+    @Async
+    public void enviarResolucionIncidencia(String emailDestino, String nombreDenunciante, String nombreDenunciado, String resolucionDetalles) {
+        String text = "Hola " + nombreDenunciante + ",\n\n" +
+                      "Te informamos que la incidencia reportada contra el usuario " + nombreDenunciado + " ha sido resuelta.\n" +
+                      "Detalles del caso:\n" + resolucionDetalles + "\n\n" +
+                      "Gracias por ayudarnos a mantener segura la comunidad.\n\n" +
+                      "Saludos,\nEquipo Red Solidaria UTP";
+        sendEmailViaBrevo(emailDestino, "Respuesta a tu reporte de incidencia - Red Solidaria UTP", text);
+    }
+
+    @Async
+    public void enviarPrimerAvisoIncidencia(String emailDestino, boolean isVoluntario) {
+        String rol = isVoluntario ? "voluntario" : "beneficiario";
+        String text = "Hola,\n\n" +
+                      "Te escribimos para notificarte que has recibido un Primer Aviso de Advertencia debido a un comportamiento inadecuado reportado en la plataforma como " + rol + ".\n" +
+                      "Te pedimos revisar nuestras pautas de convivencia y mantener el respeto mutuo.\n\n" +
+                      "Saludos,\nEquipo Red Solidaria UTP";
+        sendEmailViaBrevo(emailDestino, "⚠️ Primer aviso de advertencia - Red Solidaria UTP", text);
+    }
+
+    @Async
+    public void enviarSegundoAvisoIncidencia(String emailDestino, boolean isVoluntario) {
+        String rol = isVoluntario ? "voluntario" : "beneficiario";
+        String text = "Hola,\n\n" +
+                      "Te escribimos para notificarte que has recibido un Segundo Aviso de Advertencia debido a un comportamiento inadecuado reportado en la plataforma como " + rol + ".\n" +
+                      "Por favor toma en cuenta que un reporte adicional resultará en la inhabilitación permanente de tu cuenta.\n\n" +
+                      "Saludos,\nEquipo Red Solidaria UTP";
+        sendEmailViaBrevo(emailDestino, "⚠️ Segundo aviso de advertencia - Red Solidaria UTP", text);
+    }
+
+    @Async
+    public void enviarBloqueoCuentaIncidencia(String emailDestino, boolean isVoluntario, String motivo) {
+        String rol = isVoluntario ? "voluntario" : "beneficiario";
+        String text = "Hola,\n\n" +
+                      "Lamentamos informarte que tu cuenta ha sido suspendida permanentemente debido a la acumulación de reportes o una falta grave en la plataforma como " + rol + ".\n" +
+                      "Motivo del bloqueo:\n" + motivo + "\n\n" +
+                      "No podrás volver a registrarte en la plataforma con los mismos datos (correo, DNI, certificado o código de estudiante).\n" +
+                      "Esta decisión es inapelable.\n\n" +
+                      "Saludos,\nEquipo Red Solidaria UTP";
+        sendEmailViaBrevo(emailDestino, "🚫 Cuenta bloqueada permanentemente - Red Solidaria UTP", text);
     }
 }

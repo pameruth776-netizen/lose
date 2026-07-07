@@ -1,715 +1,718 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{admin/layoutAdm :: html}"
-      th:with="titulo='Gestión de Incidencias'">
+      th:with="titulo='Gestión de incidencias'">
 <head></head>
 <body>
-    <div th:fragment="content">
-        <style>
-            .incidencias-container {
-                max-width: 1200px;
-                margin: 40px auto;
-                padding: 0 20px;
-                font-family: 'Outfit', 'Inter', sans-serif;
-            }
-            .incidencias-header {
-                display: flex;
-                align-items: center;
-                gap: 16px;
-                margin-bottom: 30px;
-                border-bottom: 2px solid rgba(239, 68, 68, 0.1);
-                padding-bottom: 20px;
-                flex-wrap: wrap;
-            }
-            .incidencias-header-icon {
-                width: 56px;
-                height: 56px;
-                min-width: 56px;
-                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-                border-radius: 16px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
-            }
-            .incidencias-header-icon svg {
-                width: 28px;
-                height: 28px;
-            }
-            .incidencias-header-text {
-                flex: 1;
-                min-width: 0;
-            }
-            .incidencias-title {
-                margin: 0;
-                font-size: 2.2rem;
-                font-weight: 800;
-                color: #1e3a8a;
-                background: linear-gradient(135deg, #1e3a8a 0%, #ef4444 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-                word-break: break-word;
-            }
-            .incidencias-subtitle {
-                margin: 4px 0 0 0;
-                color: #6b7280;
-                font-size: 1rem;
-                line-height: 1.5;
-            }
+<div th:fragment="content">
+    <style>
+        /* Color header red/crimson for warning/incidents section */
+        .adm-page-header--red {
+            background: linear-gradient(135deg, #DC2626 0%, #7F1D1D 100%) !important;
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .adm-page-header--red .adm-hero__badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
 
-            /* Filters section */
-            .filter-container {
-                display: flex;
-                gap: 10px;
-                margin-bottom: 20px;
-                flex-wrap: wrap;
-            }
-            .filter-btn {
-                background: #f1f5f9;
-                border: 1px solid #cbd5e1;
-                padding: 8px 16px;
-                border-radius: 30px;
-                font-weight: 600;
-                font-size: 0.85rem;
-                color: #475569;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-            .filter-btn:hover {
-                background: #e2e8f0;
-            }
-            .filter-btn.active {
-                background: #ef4444;
-                color: white;
-                border-color: #ef4444;
-                box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
-            }
-            
-            .incidencias-card {
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.5);
-                border-radius: 24px;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-                padding: 30px;
-            }
-            
-            .table-responsive {
-                width: 100%;
-                overflow-x: auto;
-                border-radius: 16px;
-                -webkit-overflow-scrolling: touch;
-            }
-            .incidencias-table {
-                width: 100%;
-                border-collapse: collapse;
-                text-align: left;
-                min-width: 1000px;
-            }
-            .incidencias-table th {
-                background: rgba(239, 68, 68, 0.06);
-                color: #1e3a8a;
-                font-weight: 700;
-                font-size: 0.9rem;
-                padding: 16px 18px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                border-bottom: 2px solid rgba(239, 68, 68, 0.1);
-                white-space: nowrap;
-            }
-            .incidencias-table td {
-                padding: 16px 18px;
-                border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-                color: #334155;
-                font-size: 0.95rem;
-                vertical-align: middle;
-            }
-            .incidencias-table tr:hover td {
-                background-color: rgba(239, 68, 68, 0.01);
-            }
-            
-            /* Badges */
-            .badge-status {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                padding: 5px 12px;
-                border-radius: 40px;
-                font-weight: 700;
-                font-size: 0.8rem;
-                text-transform: uppercase;
-                white-space: nowrap;
-            }
-            .badge-pendiente {
-                background: #fee2e2;
-                color: #991b1b;
-                border: 1px solid #fca5a5;
-            }
-            .badge-revisado {
-                background: #fef3c7;
-                color: #92400e;
-                border: 1px solid #fcd34d;
-            }
-            .badge-resuelto {
-                background: #d1fae5;
-                color: #065f46;
-                border: 1px solid #6ee7b7;
-            }
-            
-            /* Evidence links */
-            .evidence-link {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                color: #ef4444;
-                font-weight: 700;
-                text-decoration: none;
-                transition: color 0.2s;
-                font-size: 0.9rem;
-            }
-            .evidence-link:hover {
-                color: #b91c1c;
-                text-decoration: underline;
-            }
-            
-            .btn-action-blue {
-                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-                color: white;
-                border: none;
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-weight: 700;
-                font-size: 0.85rem;
-                cursor: pointer;
-                box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
-                transition: all 0.2s;
-            }
-            .btn-action-blue:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 6px 14px rgba(59, 130, 246, 0.3);
-            }
-            .btn-action-red {
-                background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-                color: white;
-                border: none;
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-weight: 700;
-                font-size: 0.85rem;
-                cursor: pointer;
-                box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
-                transition: all 0.2s;
-            }
-            .btn-action-red:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 6px 14px rgba(239, 68, 68, 0.3);
-            }
-            
-            .actions-cell {
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
-            }
-            
-            /* Custom Modals */
-            .modal-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(15, 23, 42, 0.6);
-                backdrop-filter: blur(4px);
-                display: none;
-                align-items: center;
-                justify-content: center;
-                z-index: 2000;
-                padding: 16px;
-            }
-            .modal-content {
-                background: white;
-                border-radius: 20px;
-                width: 100%;
-                max-width: 550px;
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-                overflow: hidden;
-                animation: slideUp 0.3s ease-out;
-            }
-            .modal-header {
-                padding: 20px 24px;
-                color: white;
-                font-weight: 800;
-                font-size: 1.25rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            }
-            .modal-close {
-                background: none;
-                border: none;
-                color: white;
-                font-size: 1.5rem;
-                cursor: pointer;
-            }
-            .modal-body {
-                padding: 24px;
-            }
-            .modal-body label {
-                display: block;
-                font-weight: 700;
-                font-size: 0.85rem;
-                color: #334155;
-                margin-bottom: 6px;
-            }
-            .form-control {
-                width: 100%;
-                border: 1.5px solid #cbd5e1;
-                border-radius: 10px;
-                padding: 10px 12px;
-                font-family: inherit;
-                font-size: 0.95rem;
-                color: #1e293b;
-                margin-bottom: 16px;
-            }
-            .form-control:focus {
-                outline: none;
-                border-color: #3b82f6;
-            }
-            .modal-footer {
-                padding: 16px 24px;
-                background: #f8fafc;
-                display: flex;
-                justify-content: flex-end;
-                gap: 12px;
-                border-top: 1px solid #e2e8f0;
-            }
-            .btn-modal-save {
-                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 10px;
-                font-weight: 700;
-                font-size: 0.9rem;
-                cursor: pointer;
-            }
-            .btn-modal-cancel {
-                background: #e2e8f0;
-                color: #475569;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 10px;
-                font-weight: 700;
-                font-size: 0.9rem;
-                cursor: pointer;
-            }
-            
-            /* Toast Notifications */
-            .toast-container {
-                position: fixed;
-                bottom: 24px;
-                right: 24px;
-                z-index: 3000;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-            .toast {
-                background: #1e293b;
-                color: white;
-                padding: 12px 20px;
-                border-radius: 10px;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-                font-weight: 600;
-                font-size: 0.9rem;
-                opacity: 0;
-                transform: translateY(20px);
-                animation: toastIn 0.3s forwards, toastOut 0.3s 3.5s forwards;
-            }
-            .toast.toast-success { border-left: 4px solid #3b82f6; }
-            .toast.toast-error { border-left: 4px solid #ef4444; }
+        .adm-page-header--red .adm-page-header__title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
 
-            .detail-field {
-                margin-bottom: 12px;
-                font-size: 0.95rem;
-            }
-            .detail-field strong {
-                color: #1e293b;
-            }
-            .detail-field span {
-                color: #475569;
-            }
+        .adm-page-header--red .adm-page-header__subtitle {
+            color: #FEE2E2;
+            font-size: 0.95rem;
+            max-width: 800px;
+        }
 
-            @keyframes slideUp {
-                from { transform: translateY(40px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-            @keyframes toastIn {
-                to { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes toastOut {
-                to { opacity: 0; transform: translateY(-20px); }
-            }
-            
-            .empty-state {
-                text-align: center;
-                padding: 50px 20px;
-            }
-            .empty-state-icon {
-                font-size: 4rem;
-                margin-bottom: 20px;
-                display: inline-block;
-            }
-            .empty-state h3 {
-                font-size: 1.5rem;
-                color: #374151;
-                margin: 0 0 10px 0;
-                font-weight: 800;
-            }
-            .empty-state p {
-                color: #6b7280;
-                max-width: 400px;
-                margin: 0 auto;
-                font-size: 1rem;
-                line-height: 1.5;
-            }
-        </style>
+        /* Warnings and sanctions history */
+        .sanction-history-box {
+            margin-top: 1.25rem;
+            padding: 1.25rem;
+            background: #FEF2F2;
+            border-left: 4px solid #EF4444;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+        }
+        
+        .sanction-history-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #991B1B;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .sanction-item {
+            font-size: 0.85rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(239, 68, 68, 0.1);
+            color: #7F1D1D;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .sanction-item:last-child {
+            border-bottom: none;
+        }
+        
+        .sanction-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        .sanction-badge--av1 {
+            background-color: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+        
+        .sanction-badge--av2 {
+            background-color: #FEF3C7;
+            color: #92400E;
+            border: 1px solid #FDE68A;
+        }
+        
+        .sanction-badge--bloq {
+            background-color: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #FCA5A5;
+        }
 
-        <div class="incidencias-header">
-            <div class="incidencias-header-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-                    <line x1="12" y1="9" x2="12" y2="13"/>
-                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
+        /* Action buttons styling */
+        .action-buttons-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 1.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn-sancion {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .btn-sancion:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .btn-sancion:active {
+            transform: translateY(0);
+        }
+        
+        .btn-sancion--green {
+            background-color: #10B981;
+            color: white;
+        }
+        
+        .btn-sancion--green:hover {
+            background-color: #059669;
+        }
+        
+        .btn-sancion--yellow {
+            background-color: #F59E0B;
+            color: white;
+        }
+        
+        .btn-sancion--yellow:hover {
+            background-color: #D97706;
+        }
+        
+        .btn-sancion--red {
+            background-color: #EF4444;
+            color: white;
+        }
+        
+        .btn-sancion--red:hover {
+            background-color: #DC2626;
+        }
+
+        /* Block confirmation Modal */
+        .block-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: all 0.3s ease;
+        }
+        
+        .block-modal-card {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 550px;
+            padding: 2.25rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            animation: modalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid #F1F5F9;
+        }
+        
+        @keyframes modalFadeIn {
+            from { transform: translateY(-15px) scale(0.98); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        
+        .block-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid #F1F5F9;
+            padding-bottom: 1rem;
+        }
+        
+        .block-modal-title {
+            font-size: 1.35rem;
+            color: #991B1B;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        
+        .block-modal-close {
+            background: #F1F5F9;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748B;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .block-modal-close:hover {
+            background: #E2E8F0;
+            color: #1E293B;
+        }
+        
+        .block-modal-body {
+            margin-bottom: 1.75rem;
+        }
+        
+        .block-modal-body label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #334155;
+            font-size: 0.9rem;
+        }
+        
+        .block-modal-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.875rem;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        
+        .block-modal-textarea:focus {
+            outline: none;
+            border-color: #EF4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+        }
+        
+        .block-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            border-top: 1px solid #F1F5F9;
+            padding-top: 1.25rem;
+        }
+        
+        .btn-modal-cancel {
+            background-color: #F1F5F9;
+            color: #475569;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .btn-modal-cancel:hover {
+            background-color: #E2E8F0;
+        }
+        
+        .evidence-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #DC2626;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        
+        .evidence-link:hover {
+            color: #991B1B;
+            text-decoration: underline;
+        }
+    </style>
+
+    <div class="adm-dashboard adm-page">
+        <!-- HEADER DE INCIDENCIAS -->
+        <header class="adm-page-header--red">
+            <div>
+                <a th:href="@{/admin/dashboard}" class="adm-back" style="color: #FEE2E2; text-decoration: none; font-size: 0.9rem; font-weight: 500; display: inline-block; margin-bottom: 0.5rem;">← Volver al dashboard</a>
+                <div>
+                    <span class="adm-hero__badge">Incidencias</span>
+                </div>
+                <h1 class="adm-page-header__title">Gestión de Incidencias</h1>
+                <p class="adm-page-header__subtitle">Revisa los reportes de mala conducta realizados por los usuarios, analiza testimonios y aplica sanciones de advertencia o bloqueos permanentes de cuenta.</p>
             </div>
-            <div class="incidencias-header-text">
-                <h1 class="incidencias-title">Gestión de Incidencias</h1>
-                <p class="incidencias-subtitle">Supervisa, revisa y resuelve las incidencias reportadas en las ayudas brindadas.</p>
+            <div class="adm-page-header__meta" style="margin-top: 1.5rem;">
+                <div class="adm-page-header__count-box" style="background: rgba(255,255,255,0.1); padding: 0.75rem 1.5rem; border-radius: 8px; display: inline-block;">
+                    <span class="adm-page-header__count" style="font-size: 1.75rem; font-weight: 800; display: block;" th:text="${#lists.size(incidencias)}">0</span>
+                    <span class="adm-page-header__count-label" style="font-size: 0.75rem; color: #FEE2E2; font-weight: 600; text-transform: uppercase;">Reportes Activos</span>
+                </div>
             </div>
+        </header>
+
+        <!-- MENSAJES DE OPERACIÓN -->
+        <div class="adm-alerts" th:if="${success} or ${error}" style="margin-bottom: 1.5rem;">
+            <div th:if="${success}" class="adm-alert adm-alert--success" style="background-color: #D1FAE5; border-left: 4px solid #10B981; color: #065F46; padding: 1rem; border-radius: 6px; font-weight: 500;" th:text="${success}"></div>
+            <div th:if="${error}" class="adm-alert adm-alert--error" style="background-color: #FEE2E2; border-left: 4px solid #EF4444; color: #991B1B; padding: 1rem; border-radius: 6px; font-weight: 500;" th:text="${error}"></div>
         </div>
 
-        <!-- Filters -->
-        <div class="filter-container">
-            <button class="filter-btn active" id="btnFilterAll" onclick="applyFilter('ALL', 'btnFilterAll')">Todas</button>
-            <button class="filter-btn" id="btnFilterPendiente" onclick="applyFilter('PENDIENTE', 'btnFilterPendiente')">Pendientes</button>
-            <button class="filter-btn" id="btnFilterRevisado" onclick="applyFilter('REVISADO', 'btnFilterRevisado')">Revisadas</button>
-            <button class="filter-btn" id="btnFilterResuelto" onclick="applyFilter('RESUELTO', 'btnFilterResuelto')">Resueltas</button>
-        </div>
-
-        <div class="incidencias-card">
-            <!-- Caso: No hay incidencias -->
-            <div th:if="${#lists.isEmpty(incidencias)}" class="empty-state" id="emptyStateMsg">
-                <span class="empty-state-icon" role="img" aria-label="Escudo de seguridad">🛡️</span>
-                <h3>Sin incidencias registradas</h3>
-                <p>Todo está en orden. No hay reportes de incidencias en este momento en la comunidad.</p>
-            </div>
-
-            <!-- Caso: Hay incidencias -->
-            <div th:if="${!#lists.isEmpty(incidencias)}" class="table-responsive">
-                <table class="incidencias-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Código Ayuda</th>
-                            <th>Reportado Por</th>
-                            <th>Involucrado</th>
-                            <th>Fecha</th>
-                            <th>Descripción</th>
-                            <th>Evidencia</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="incidenciasTableBody">
-                        <tr th:each="inc : ${incidencias}" th:data-estado="${inc.estado.name()}" th:id="'inc-row-' + ${inc.id}">
-                            <td style="font-weight: bold; color: #1e3a8a;" th:text="${inc.id}">1</td>
-                            <td style="font-family: monospace; font-weight: bold;" th:text="${'#AY-' + inc.historialAyuda.solicitud.id}">#AY-001</td>
-                            <td>
-                                <span th:text="${inc.reportadoPor.nombreCompleto}">Juan Pérez</span>
-                                <br>
-                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;" th:text="${inc.reportadoPor.rol}">Voluntario</span>
-                            </td>
-                            <td>
-                                <span th:text="${inc.involucrado.nombreCompleto}">María Gómez</span>
-                                <br>
-                                <span style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;" th:text="${inc.involucrado.rol}">Discapacitado</span>
-                            </td>
-                            <td th:text="${#temporals.format(inc.fechaReporte, 'dd/MM/yyyy hh:mm a')}">08/06/2026 04:30 PM</td>
-                            <td>
-                                <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
-                                     th:text="${inc.descripcion}" th:title="${inc.descripcion}">Problema ocurrido...</div>
-                            </td>
-                            <td>
-                                <div th:if="${inc.rutaArchivo != null}">
-                                    <a th:href="${inc.rutaArchivo}" target="_blank" class="evidence-link" th:download="${inc.nombreArchivo}">
-                                        <span th:if="${inc.tipoEvidencia.name() == 'FOTO'}">📷 Ver Foto</span>
-                                        <span th:if="${inc.tipoEvidencia.name() == 'VIDEO'}">🎥 Ver Video</span>
-                                        <span th:if="${inc.tipoEvidencia.name() == 'AUDIO'}">🎵 Ver Audio</span>
-                                    </a>
+        <!-- LISTADO Y DETALLE DE REPORTES -->
+        <div class="adm-activ-card" th:if="${not #lists.isEmpty(incidencias)}">
+            <div class="adm-activ-split">
+                <!-- Panel Izquierdo: Listado de Reportes -->
+                <aside class="adm-activ-list-panel">
+                    <div class="adm-activ-list-header" style="font-weight: 700; color: #1E293B; border-bottom: 1px solid #E2E8F0; padding: 1rem;">
+                        Reportes de Incidencias
+                    </div>
+                    <div class="adm-activ-list">
+                        <div class="adm-activ-item"
+                             th:each="inc : ${incidencias}"
+                             th:data-incidencia-id="${inc.id}">
+                            <span class="adm-avatar adm-avatar--indigo" style="background-color: #FEE2E2; color: #EF4444; font-weight: 800;">!</span>
+                            <div>
+                                <div class="adm-cell-user__name" style="font-weight: 700; color: #1E293B;" th:text="'Incidencia #' + ${inc.id}">Incidencia #1</div>
+                                <div class="adm-cell-user__email" style="font-size: 0.8rem; color: #64748B;" th:text="${#temporals.format(inc.fechaCreacion, 'dd/MM/yyyy HH:mm')}">Fecha</div>
+                                <div style="margin-top: 0.35rem; display: flex; gap: 4px; flex-wrap: wrap;">
+                                    <span th:if="${inc.denunciante.rol == 'DISCAPACITADO'}" class="adm-badge adm-badge--vol" style="background-color: #E0F2FE; color: #0369A1;">Contra Voluntario</span>
+                                    <span th:if="${inc.denunciante.rol == 'VOLUNTARIO'}" class="adm-badge adm-badge--dis" style="background-color: #FAF5FF; color: #6B21A8;">Contra Beneficiario</span>
+                                    
+                                    <!-- Badges de estado de incidencia -->
+                                    <span th:if="${inc.estado == 'PENDIENTE'}" class="adm-badge" style="background-color: #FEF3C7; color: #D97706; border: 1px solid #FDE68A;">PENDIENTE</span>
+                                    <span th:if="${inc.estado == 'PROCESANDO'}" class="adm-badge" style="background-color: #E0F2FE; color: #2563EB; border: 1px solid #BAE6FD;">PROCESANDO</span>
+                                    <span th:if="${inc.estado == 'RESUELTO'}" class="adm-badge" style="background-color: #D1FAE5; color: #059669; border: 1px solid #A7F3D0;">RESUELTO</span>
                                 </div>
-                                <span th:if="${inc.rutaArchivo == null}" style="color: #94a3b8; font-style: italic;">Sin evidencia</span>
-                            </td>
-                            <td th:id="'status-badge-cell-' + ${inc.id}">
-                                <span th:if="${inc.estado.name() == 'PENDIENTE'}" class="badge-status badge-pendiente">Pendiente</span>
-                                <span th:if="${inc.estado.name() == 'REVISADO'}" class="badge-status badge-revisado">Revisado</span>
-                                <span th:if="${inc.estado.name() == 'RESUELTO'}" class="badge-status badge-resuelto">Resuelto</span>
-                            </td>
-                            <td>
-                                <div class="actions-cell">
-                                    <button class="btn-action-blue" th:onclick="abrirDetalle([[${inc.id}]], [[${inc.historialAyuda.solicitud.id}]], [[${inc.reportadoPor.nombreCompleto}]], [[${inc.reportadoPor.rol}]], [[${inc.involucrado.nombreCompleto}]], [[${inc.involucrado.rol}]], [[${inc.descripcion}]], [[${inc.rutaArchivo}]], [[${inc.tipoEvidencia != null ? inc.tipoEvidencia.name() : ''}]], [[${inc.estado.name()}]], [[${inc.resolucion}]])">
-                                        🔍 Revisar
-                                    </button>
-                                    <button class="btn-action-red" th:onclick="eliminarIncidencia([[${inc.id}]])">
-                                        🗑️ Eliminar
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- ================= MODAL: DETALLE/CAMBIAR ESTADO ================= -->
-        <div class="modal-overlay" id="modalDetalle">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <span>🔍 Revisar Incidencia</span>
-                    <button class="modal-close" onclick="cerrarModal('modalDetalle')">✕</button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="detIncidenciaId">
-                    
-                    <div class="detail-field">
-                        <strong>ID Incidencia:</strong> <span id="detId"></span>
-                    </div>
-                    <div class="detail-field">
-                        <strong>Código de Ayuda:</strong> <span id="detAyudaCodigo"></span>
-                    </div>
-                    <div class="detail-field">
-                        <strong>Reportado por:</strong> <span id="detReportadoPor"></span>
-                    </div>
-                    <div class="detail-field">
-                        <strong>Involucrado:</strong> <span id="detInvolucrado"></span>
-                    </div>
-                    <div class="detail-field">
-                        <strong>Descripción:</strong>
-                        <p id="detDescripcion" style="background: #f8fafc; border: 1.5px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-top: 6px; white-space: pre-wrap; font-size: 0.9rem; color: #334155;"></p>
-                    </div>
-
-                    <div class="detail-field" id="detEvidenciaContainer">
-                        <strong>Evidencia Adjunta:</strong>
-                        <div id="detEvidenciaView" style="margin-top: 8px;"></div>
-                    </div>
-
-                    <hr style="border: 0; border-top: 1.5px solid #e2e8f0; margin: 20px 0;">
-
-                    <div class="form-group">
-                        <label for="detEstado">Cambiar Estado:</label>
-                        <select id="detEstado" class="form-control">
-                            <option value="PENDIENTE">PENDIENTE</option>
-                            <option value="REVISADO">REVISADO</option>
-                            <option value="RESUELTO">RESUELTO</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="detResolucion">Resolución / Notas del Administrador (Máx. 500 caracteres):</label>
-                        <textarea id="detResolucion" class="form-control" rows="3" maxlength="500" placeholder="Escribe la resolución de la incidencia aquí..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-modal-cancel" onclick="cerrarModal('modalDetalle')">Cancelar</button>
-                    <button class="btn-modal-save" onclick="guardarCambioEstado()">Guardar Cambios</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- TOAST CONTAINER -->
-        <div class="toast-container" id="toastContainer"></div>
-    </div>
-
-    <!-- SCRIPTS -->
-    <div th:fragment="scripts">
-        <script>
-            // Toast helper
-            function showToast(message, type = 'success') {
-                const container = document.getElementById('toastContainer');
-                const toast = document.createElement('div');
-                toast.className = `toast toast-${type}`;
-                toast.innerHTML = (type === 'success' ? '✅ ' : '❌ ') + message;
-                container.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
-            }
-
-            // Filter Table Rows
-            function applyFilter(estado, btnId) {
-                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-                document.getElementById(btnId).classList.add('active');
-
-                const rows = document.querySelectorAll('#incidenciasTableBody tr');
-                let countVisible = 0;
-
-                rows.forEach(row => {
-                    const rowEstado = row.getAttribute('data-estado');
-                    if (estado === 'ALL' || rowEstado === estado) {
-                        row.style.display = '';
-                        countVisible++;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-                const emptyState = document.getElementById('emptyStateMsg');
-                if (countVisible === 0) {
-                    if (!emptyState) {
-                        // Generate dynamic empty state if list gets empty
-                        const container = document.querySelector('.incidencias-card');
-                        container.innerHTML += `
-                            <div class="empty-state" id="emptyStateMsg">
-                                <span class="empty-state-icon" role="img">🛡️</span>
-                                <h3>Sin incidencias registradas</h3>
-                                <p>No se encontraron incidencias en este estado.</p>
                             </div>
-                        `;
-                    } else {
-                        emptyState.style.display = 'block';
-                    }
-                } else {
-                    if (emptyState) {
-                        emptyState.style.display = 'none';
-                    }
-                }
-            }
+                        </div>
+                    </div>
+                </aside>
 
-            // Modal Management
-            function abrirModal(id) {
-                document.getElementById(id).style.display = 'flex';
-            }
-            function cerrarModal(id) {
-                document.getElementById(id).style.display = 'none';
-            }
+                <!-- Panel Derecho: Detalle de Incidencia -->
+                <div class="adm-activ-detail-panel" style="padding: 2rem;">
+                    <!-- No Selection State -->
+                    <div id="no-selection" class="adm-activ-no-sel" style="text-align: center; padding: 4rem 2rem;">
+                        <div class="adm-activ-no-sel__icon" style="margin-bottom: 1.5rem;">
+                            <svg viewBox="0 0 24 24" style="width: 64px; height: 64px; fill: #94A3B8;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                        </div>
+                        <h3 style="font-size: 1.25rem; font-weight: 700; color: #334155; margin-bottom: 0.5rem;">Selecciona un reporte de incidente</h3>
+                        <p style="color: #64748B; font-size: 0.95rem; max-width: 400px; margin: 0 auto;">Haz clic en la lista de la izquierda para revisar los testimonios, descargar las evidencias y aplicar sanciones a las cuentas.</p>
+                    </div>
 
-            // Review / Edit state Modal
-            function abrirDetalle(id, ayudaId, reportadoPor, reportadoRol, involucrado, involucradoRol, descripcion, rutaArchivo, tipoEvidencia, estado, resolucion) {
-                document.getElementById('detIncidenciaId').value = id;
-                document.getElementById('detId').textContent = id;
-                document.getElementById('detAyudaCodigo').textContent = `#AY-${ayudaId}`;
-                document.getElementById('detReportadoPor').textContent = `${reportadoPor} (${reportadoRol})`;
-                document.getElementById('detInvolucrado').textContent = `${involucrado} (${involucradoRol})`;
-                document.getElementById('detDescripcion').textContent = descripcion;
-                document.getElementById('detEstado').value = estado;
-                document.getElementById('detResolucion').value = resolucion || '';
+                    <!-- Detail Card for each Help History Incident -->
+                    <div th:each="inc : ${incidencias}"
+                         th:id="'details-' + ${inc.id}"
+                         class="user-detail-panel"
+                         style="display: none;">
 
-                const evView = document.getElementById('detEvidenciaView');
-                const evContainer = document.getElementById('detEvidenciaContainer');
+                        <div class="adm-activ-detail-header" style="border-bottom: 2px solid #F1F5F9; padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                            <h2 style="font-size: 1.5rem; font-weight: 800; color: #0F172A; margin: 0;" th:text="'Detalle de Incidencia #' + ${inc.id}">Incidencia</h2>
+                            <div>
+                                <span class="adm-badge" 
+                                      th:styleappend="${inc.estado == 'PENDIENTE' ? 'background-color: #FEF3C7; color: #D97706;' : (inc.estado == 'PROCESANDO' ? 'background-color: #E0F2FE; color: #2563EB;' : 'background-color: #D1FAE5; color: #059669;')}"
+                                      style="padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; margin-right: 8px;"
+                                      th:text="${inc.estado}">PENDIENTE</span>
+                                <span class="adm-badge" style="background-color: #F1F5F9; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;" th:text="${#temporals.format(inc.fechaCreacion, 'dd/MM/yyyy HH:mm')}">Fecha</span>
+                            </div>
+                        </div>
 
-                if (rutaArchivo) {
-                    evContainer.style.display = 'block';
-                    if (tipoEvidencia === 'FOTO') {
-                        evView.innerHTML = `<img src="${rutaArchivo}" alt="Evidencia" style="max-width:100%; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">`;
-                    } else if (tipoEvidencia === 'VIDEO') {
-                        evView.innerHTML = `
-                            <video src="${rutaArchivo}" controls style="max-width:100%; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-                                Tu navegador no soporta reproducción de video.
-                            </video>
-                        `;
-                    } else if (tipoEvidencia === 'AUDIO') {
-                        evView.innerHTML = `
-                            <audio src="${rutaArchivo}" controls style="width:100%;">
-                                Tu navegador no soporta reproducción de audio.
-                            </audio>
-                        `;
-                    }
-                } else {
-                    evContainer.style.display = 'none';
-                    evView.innerHTML = '';
-                }
+                        <!-- 1. CASO A: REPORTE CONTRA EL VOLUNTARIO (Denunciante es DISCAPACITADO) -->
+                        <div th:if="${inc.denunciante.rol == 'DISCAPACITADO'}" 
+                             style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.75rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                            
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+                                <h3 style="color: #0F172A; font-weight: 800; font-size: 1.1rem; margin: 0;">Reporte contra el Voluntario</h3>
+                                <span class="adm-badge" style="background-color: #FEF2F2; color: #EF4444; border: 1px solid #FEE2E2; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">Voluntario Reportado</span>
+                            </div>
 
-                abrirModal('modalDetalle');
-            }
+                            <div class="adm-activ-info-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                                <div class="adm-activ-field">
+                                    <label style="font-size: 0.8rem; color: #64748B; font-weight: 600; text-transform: uppercase;">Denunciado (Voluntario)</label>
+                                    <div class="adm-activ-field__value" style="font-weight: 700; color: #1E293B;" th:text="${inc.denunciado != null ? inc.denunciado.nombreCompleto : 'Sin voluntario'}">—</div>
+                                </div>
+                                <div class="adm-activ-field">
+                                    <label style="font-size: 0.8rem; color: #64748B; font-weight: 600; text-transform: uppercase;">Correo del Voluntario</label>
+                                    <div class="adm-activ-field__value" style="color: #475569;" th:text="${inc.denunciado != null ? inc.denunciado.email : '—'}">—</div>
+                                </div>
+                                <div class="adm-activ-field">
+                                    <label style="font-size: 0.8rem; color: #64748B; font-weight: 600; text-transform: uppercase;">Denunciante (Beneficiario)</label>
+                                    <div class="adm-activ-field__value" style="font-weight: 700; color: #1E293B;" th:text="${inc.denunciante != null ? inc.denunciante.nombreCompleto : 'Sin beneficiario'}">—</div>
+                                </div>
+                                <div class="adm-activ-field">
+                                    <label style="font-size: 0.8rem; color: #64748B; font-weight: 600; text-transform: uppercase;">Correo del Beneficiario</label>
+                                    <div class="adm-activ-field__value" style="color: #475569;" th:text="${inc.denunciante != null ? inc.denunciante.email : '—'}">—</div>
+                                </div>
+                            </div>
 
-            // Save state change
-            function guardarCambioEstado() {
-                const id = document.getElementById('detIncidenciaId').value;
-                const estado = document.getElementById('detEstado').value;
-                const resolucion = document.getElementById('detResolucion').value;
+                            <!-- Historial de Advertencias del Voluntario -->
+                            <div class="sanction-history-box" th:if="${inc.denunciado != null}">
+                                <div class="sanction-history-title">Historial de Sanciones del Voluntario</div>
+                                
+                                <th:block th:with="volSanciones=${sancionesPorUsuario.get(inc.denunciado.id)}">
+                                    <div th:if="${volSanciones == null or #lists.isEmpty(volSanciones)}" style="font-size: 0.85rem; color: #475569; font-weight: 500;">
+                                        ✅ Sin advertencias previas (Cuenta limpia).
+                                    </div>
+                                    <div th:unless="${volSanciones == null or #lists.isEmpty(volSanciones)}">
+                                        <div class="sanction-item" th:each="s : ${volSanciones}">
+                                            <span class="sanction-badge" 
+                                                  th:classappend="${s.tipoSancion == 'AVISO_1' ? ' sanction-badge--av1' : (s.tipoSancion == 'AVISO_2' ? ' sanction-badge--av2' : ' sanction-badge--bloq')}"
+                                                  th:text="${s.tipoSancion == 'AVISO_1' ? '1er Aviso' : (s.tipoSancion == 'AVISO_2' ? '2do Aviso' : 'Bloqueo')}">Aviso</span>
+                                            <span th:text="${#temporals.format(s.fechaSancion, 'dd/MM/yyyy')}">Fecha</span> — 
+                                            <span th:text="${s.motivo != null and s.motivo != '' ? s.motivo : 'Sin motivo especificado'}" style="font-style: italic;">Motivo</span>
+                                        </div>
+                                    </div>
+                                </th:block>
+                            </div>
 
-                const formData = new FormData();
-                formData.append('id', id);
-                formData.append('estado', estado);
-                formData.append('resolucion', resolucion);
+                            <div style="margin-top: 1.25rem;">
+                                <label style="font-weight: 700; color: #334155; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Testimonio / Queja del Beneficiario:</label>
+                                <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 1.25rem; border-radius: 8px; font-size: 0.95rem; line-height: 1.6; color: #334155; white-space: pre-line;" th:text="${inc.descripcion}"></div>
+                            </div>
 
-                fetch('/admin/api/incidencia/cambiar-estado', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json().then(data => ({ status: response.status, body: data })))
-                .then(res => {
-                    if (res.status === 200) {
-                        showToast(res.body.mensaje, 'success');
-                        cerrarModal('modalDetalle');
+                            <!-- Evidencia -->
+                            <div th:if="${inc.evidenciaUrl != null and inc.evidenciaUrl != ''}" style="margin-top: 1.25rem;">
+                                <label style="font-weight: 700; color: #334155; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Evidencia adjuntada por el Beneficiario:</label>
+                                <a th:href="${inc.evidenciaUrl}" class="evidence-link" target="_blank" rel="noopener">
+                                    <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:currentColor;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                                    Descargar / Abrir Evidencia
+                                </a>
+                            </div>
 
-                        // Update table row dynamic data-attribute and badges
-                        const row = document.getElementById(`inc-row-${id}`);
-                        row.setAttribute('data-estado', estado);
+                            <!-- Botones de Acción para Sancionar al Voluntario -->
+                            <p th:if="${inc.denunciado != null and inc.estado != 'RESUELTO'}" style="font-size:0.85rem;color:#64748B;margin-top:1rem;margin-bottom:0;">
+                                <strong>Acciones:</strong> Los avisos 1 y 2 envían correo al denunciado. En todos los casos se notifica al denunciante que su reporte fue atendido. El bloqueo suspende la cuenta permanentemente.
+                            </p>
+                            <div class="action-buttons-group" th:if="${inc.denunciado != null and inc.estado != 'RESUELTO'}">
+                                <form th:action="@{/admin/incidencias/sancionar}" method="post" class="confirm-sancion-form"
+                                      th:data-confirm-msg="|¿Enviar Primer Aviso por conductas indebidas a ${inc.denunciado.nombreCompleto}? Se registrará el incidente en su historial.|">
+                                    <input type="hidden" name="historialId" th:value="${inc.historialAyuda.id}">
+                                    <input type="hidden" name="reportedUserId" th:value="${inc.denunciado.id}">
+                                    <input type="hidden" name="tipoSancion" value="AVISO_1">
+                                    <input type="hidden" name="motivo" value="Primer aviso por conducta indebida reportada en el historial de ayuda.">
+                                    <button type="submit" class="btn-sancion btn-sancion--green">
+                                        <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:white;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                        Primer aviso
+                                    </button>
+                                </form>
+                                <form th:action="@{/admin/incidencias/sancionar}" method="post" class="confirm-sancion-form"
+                                      th:data-confirm-msg="|¿Enviar Segundo Aviso a ${inc.denunciado.nombreCompleto}? Se le advertirá que la próxima infracción resultará en el bloqueo de su cuenta.|">
+                                    <input type="hidden" name="historialId" th:value="${inc.historialAyuda.id}">
+                                    <input type="hidden" name="reportedUserId" th:value="${inc.denunciado.id}">
+                                    <input type="hidden" name="tipoSancion" value="AVISO_2">
+                                    <input type="hidden" name="motivo" value="Segundo aviso por mala conducta. Cuenta advertida bajo riesgo de suspensión.">
+                                    <button type="submit" class="btn-sancion btn-sancion--yellow">
+                                        <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:white;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                        Segundo aviso
+                                    </button>
+                                </form>
+                                <button type="button" class="btn-sancion btn-sancion--red open-block-btn"
+                                        th:data-historial-id="${inc.historialAyuda.id}"
+                                        th:data-reported-user-id="${inc.denunciado.id}"
+                                        th:data-user-name="${inc.denunciado.nombreCompleto}">
+                                    <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:white;"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                                    Bloquear cuenta
+                                </button>
+                            </div>
 
-                        const badgeCell = document.getElementById(`status-badge-cell-${id}`);
-                        let badgeHtml = '';
-                        if (estado === 'PENDIENTE') {
-                            badgeHtml = '<span class="badge-status badge-pendiente">Pendiente</span>';
-                        } else if (estado === 'REVISADO') {
-                            badgeHtml = '<span class="badge-status badge-revisado">Revisado</span>';
-                        } else if (estado === 'RESUELTO') {
-                            badgeHtml = '<span class="badge-status badge-resuelto">Resuelto</span>';
-                        }
-                        badgeCell.innerHTML = badgeHtml;
-                    } else {
-                        showToast(res.body.error || 'Error al cambiar de estado', 'error');
-                    }
-                })
-                .catch(err => {
-                    showToast('Error de conexión', 'error');
-                    console.error(err);
-                });
-            }
+                            <div th:if="${inc.estado == 'RESUELTO'}" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background-color: #E6F4EA; border-radius: 8px; color: #137333; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                                <span>✔️ Esta incidencia ya ha sido resuelta por la administración.</span>
+                            </div>
+                        </div>
 
-            // Delete incident
-            function eliminarIncidencia(id) {
-                if (!confirm('¿Estás seguro de que deseas eliminar esta incidencia permanentemente?')) {
-                    return;
-                }
+                        <!-- 2. CASO B: REPORTE CONTRA EL BENEFICIARIO (Denunciante es VOLUNTARIO) -->
+                        <div th:if="${inc.denunciante.rol == 'VOLUNTARIO'}" 
+                             style="background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.75rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                            
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+                                <h3 style="color: #0F172A; font-weight: 800; font-size: 1.1rem; margin: 0;">Reporte contra el Beneficiario</h3>
+                                <span class="adm-badge" style="background-color: #FAF5FF; color: #8B5CF6; border: 1px solid #F3E8FF; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">Beneficiario Reportado</span>
+                            </div>
 
-                fetch(`/admin/api/incidencia/eliminar?id=${id}`, {
-                    method: 'DELETE'
-                })
-                .then(response => response.json().then(data => ({ status: response.status, body: data })))
-                .then(res => {
-                    if (res.status === 200) {
-                        showToast(res.body.mensaje, 'success');
-                        // Remove row from UI
-                        const row = document.getElementById(`inc-row-${id}`);
-                        row.remove();
+                            <div class="adm-activ-info-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                                <div class="adm-activ-field">
+                                    <label style="font-size: 0.8rem; color: #64748B; font-weight: 600; text-transform: uppercase;">Denunciado (Beneficiario)</label>
+                                    <div class="adm-activ-field__value" style="font-weight: 700; color: #1E293B;" th:text="${inc.denunciado != null ? inc.denunciado.nombreCompleto : 'Sin beneficiario'}">—</div>
+                                </div>
+                                <div class="adm-activ-field">
+                                    <label style="font-size: 0.8rem; color: #64748B; font-weight: 600; text-transform: uppercase;">Correo del Beneficiario</label>
+                                    <div class="adm-activ-field__value" style="color: #475569;" th:text="${inc.denunciado != null ? inc.denunciado.email : '—'}">—</div>
+                                </div>
+                                <div class="adm-activ-field">
+                                    <label style="font-size: 0.8rem; color: #64748B; font-weight: 600; text-transform: uppercase;">Denunciante (Voluntario)</label>
+                                    <div class="adm-activ-field__value" style="font-weight: 700; color: #1E293B;" th:text="${inc.denunciante != null ? inc.denunciante.nombreCompleto : 'Sin voluntario'}">—</div>
+                                </div>
+                                <div class="adm-activ-field">
+                                    <label style="font-size: 0.8rem; color: #64748B; font-weight: 600; text-transform: uppercase;">Correo del Voluntario</label>
+                                    <div class="adm-activ-field__value" style="color: #475569;" th:text="${inc.denunciante != null ? inc.denunciante.email : '—'}">—</div>
+                                </div>
+                            </div>
 
-                        // Check if no rows left
-                        const rows = document.querySelectorAll('#incidenciasTableBody tr');
-                        if (rows.length === 0) {
-                            location.reload(); // Reload to show empty state
-                        }
-                    } else {
-                        showToast(res.body.error || 'Error al eliminar incidencia', 'error');
-                    }
-                })
-                .catch(err => {
-                    showToast('Error de conexión', 'error');
-                    console.error(err);
-                });
-            }
-        </script>
+                            <!-- Historial de Advertencias del Beneficiario -->
+                            <div class="sanction-history-box" th:if="${inc.denunciado != null}">
+                                <div class="sanction-history-title">Historial de Sanciones del Beneficiario</div>
+                                
+                                <th:block th:with="discSanciones=${sancionesPorUsuario.get(inc.denunciado.id)}">
+                                    <div th:if="${discSanciones == null or #lists.isEmpty(discSanciones)}" style="font-size: 0.85rem; color: #475569; font-weight: 500;">
+                                        ✅ Sin advertencias previas (Cuenta limpia).
+                                    </div>
+                                    <div th:unless="${discSanciones == null or #lists.isEmpty(discSanciones)}">
+                                        <div class="sanction-item" th:each="s : ${discSanciones}">
+                                            <span class="sanction-badge" 
+                                                  th:classappend="${s.tipoSancion == 'AVISO_1' ? ' sanction-badge--av1' : (s.tipoSancion == 'AVISO_2' ? ' sanction-badge--av2' : ' sanction-badge--bloq')}"
+                                                  th:text="${s.tipoSancion == 'AVISO_1' ? '1er Aviso' : (s.tipoSancion == 'AVISO_2' ? '2do Aviso' : 'Bloqueo')}">Aviso</span>
+                                            <span th:text="${#temporals.format(s.fechaSancion, 'dd/MM/yyyy')}">Fecha</span> — 
+                                            <span th:text="${s.motivo != null and s.motivo != '' ? s.motivo : 'Sin motivo especificado'}" style="font-style: italic;">Motivo</span>
+                                        </div>
+                                    </div>
+                                </th:block>
+                            </div>
+
+                            <div style="margin-top: 1.25rem;">
+                                <label style="font-weight: 700; color: #334155; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Testimonio / Queja del Voluntario:</label>
+                                <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 1.25rem; border-radius: 8px; font-size: 0.95rem; line-height: 1.6; color: #334155; white-space: pre-line;" th:text="${inc.descripcion}"></div>
+                            </div>
+
+                            <!-- Evidencia -->
+                            <div th:if="${inc.evidenciaUrl != null and inc.evidenciaUrl != ''}" style="margin-top: 1.25rem;">
+                                <label style="font-weight: 700; color: #334155; display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Evidencia adjuntada por el Voluntario:</label>
+                                <a th:href="${inc.evidenciaUrl}" class="evidence-link" target="_blank" rel="noopener">
+                                    <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:currentColor;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                                    Descargar / Abrir Evidencia
+                                </a>
+                            </div>
+
+                            <!-- Botones de Acción para Sancionar al Beneficiario -->
+                            <p th:if="${inc.denunciado != null and inc.estado != 'RESUELTO'}" style="font-size:0.85rem;color:#64748B;margin-top:1rem;margin-bottom:0;">
+                                <strong>Acciones:</strong> Los avisos 1 y 2 envían correo al denunciado. En todos los casos se notifica al denunciante que su reporte fue atendido. El bloqueo suspende la cuenta permanentemente.
+                            </p>
+                            <div class="action-buttons-group" th:if="${inc.denunciado != null and inc.estado != 'RESUELTO'}">
+                                <form th:action="@{/admin/incidencias/sancionar}" method="post" class="confirm-sancion-form"
+                                      th:data-confirm-msg="|¿Enviar Primer Aviso por conductas indebidas a ${inc.denunciado.nombreCompleto}? Se registrará el incidente en su historial.|">
+                                    <input type="hidden" name="historialId" th:value="${inc.historialAyuda.id}">
+                                    <input type="hidden" name="reportedUserId" th:value="${inc.denunciado.id}">
+                                    <input type="hidden" name="tipoSancion" value="AVISO_1">
+                                    <input type="hidden" name="motivo" value="Primer aviso por conducta indebida reportada en el historial de ayuda.">
+                                    <button type="submit" class="btn-sancion btn-sancion--green">
+                                        <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:white;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                        Primer aviso
+                                    </button>
+                                </form>
+                                <form th:action="@{/admin/incidencias/sancionar}" method="post" class="confirm-sancion-form"
+                                      th:data-confirm-msg="|¿Enviar Segundo Aviso a ${inc.denunciado.nombreCompleto}? Se le advertirá que la próxima infracción resultará en el bloqueo de su cuenta.|">
+                                    <input type="hidden" name="historialId" th:value="${inc.historialAyuda.id}">
+                                    <input type="hidden" name="reportedUserId" th:value="${inc.denunciado.id}">
+                                    <input type="hidden" name="tipoSancion" value="AVISO_2">
+                                    <input type="hidden" name="motivo" value="Segundo aviso por mala conducta. Cuenta advertida bajo riesgo de suspensión.">
+                                    <button type="submit" class="btn-sancion btn-sancion--yellow">
+                                        <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:white;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                        Segundo aviso
+                                    </button>
+                                </form>
+                                <button type="button" class="btn-sancion btn-sancion--red open-block-btn" 
+                                        th:data-historial-id="${inc.historialAyuda.id}"
+                                        th:data-reported-user-id="${inc.denunciado.id}"
+                                        th:data-user-name="${inc.denunciado.nombreCompleto}">
+                                    <svg viewBox="0 0 24 24" style="width:16px; height:16px; fill:white;"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                                    Bloquear cuenta
+                                </button>
+                            </div>
+
+                            <div th:if="${inc.estado == 'RESUELTO'}" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background-color: #E6F4EA; border-radius: 8px; color: #137333; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                                <span>✔️ Esta incidencia ya ha sido resuelta por la administración.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista vacía cuando no hay reportes -->
+        <div class="adm-empty" th:if="${#lists.isEmpty(incidencias)}" style="background: white; padding: 5rem 2rem; border-radius: 12px; text-align: center; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div class="adm-empty__icon" style="margin-bottom: 1.5rem;">
+                <svg viewBox="0 0 24 24" style="width: 72px; height: 72px; fill: #10B981;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; color: #1E293B; margin-bottom: 0.5rem;">No hay incidencias reportadas</h3>
+            <p style="color: #64748B; font-size: 1rem; max-width: 450px; margin: 0 auto;">¡Excelente! Actualmente no se registran incidentes ni quejas activas por conductas inapropiadas en la plataforma de Red Solidaria.</p>
+        </div>
     </div>
+
+    <!-- MODAL DE CONFIRMACIÓN DE BLOQUEO PERMANENTE -->
+    <div id="blockModal" class="block-modal-overlay" onclick="closeBlockModalOutside(event)">
+        <div class="block-modal-card">
+            <div class="block-modal-header">
+                <h3 class="block-modal-title">Confirmar Bloqueo de Cuenta</h3>
+                <button class="block-modal-close" onclick="closeBlockModal()">&times;</button>
+            </div>
+            <form th:action="@{/admin/incidencias/sancionar}" method="post" onsubmit="return validateBlockForm()">
+                <input type="hidden" id="modalHistorialId" name="historialId">
+                <input type="hidden" id="modalReportedUserId" name="reportedUserId">
+                <input type="hidden" name="tipoSancion" value="BLOQUEO">
+                
+                <div class="block-modal-body">
+                    <p style="font-size: 0.95rem; color: #475569; margin-bottom: 1.25rem; line-height: 1.5;">
+                        Estás a punto de inhabilitar permanentemente la cuenta de: <strong id="modalUserName" style="color: #0F172A;"></strong>.
+                        El usuario será deslogueado inmediatamente y no podrá volver a acceder a la plataforma. Se le enviará un correo notificándole los motivos del bloqueo.
+                    </p>
+                    <div>
+                        <label for="modalMotivo">Motivo del Bloqueo (Obligatorio)</label>
+                        <textarea id="modalMotivo" name="motivo" class="block-modal-textarea" 
+                                  placeholder="Describe de forma detallada y justificada los motivos por los cuales se inhabilitará de forma permanente la cuenta de este usuario..."></textarea>
+                        <span id="motivoError" style="color: #EF4444; font-size: 0.85rem; display: none; margin-top: 0.5rem; font-weight: 600;">⚠️ El motivo es obligatorio para proceder con el bloqueo de la cuenta.</span>
+                    </div>
+                </div>
+                <div class="block-modal-footer">
+                    <button type="button" class="btn-modal-cancel" onclick="closeBlockModal()">Cancelar</button>
+                    <button type="submit" class="btn-sancion btn-sancion--red" style="margin: 0; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.25);">Confirmar Bloqueo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE NAVEGACIÓN INTERACTIVA -->
+    <script>
+        function showIncidenceDetails(id, element) {
+            // Ocultar mensaje por defecto
+            const noSel = document.getElementById('no-selection');
+            if (noSel) noSel.style.display = 'none';
+
+            // Ocultar todos los paneles de detalle
+            document.querySelectorAll('.user-detail-panel').forEach(p => p.style.display = 'none');
+            
+            // Quitar clase activa de todos los elementos de la lista
+            document.querySelectorAll('.adm-activ-item').forEach(i => i.classList.remove('active'));
+
+            // Mostrar el detalle seleccionado
+            const panel = document.getElementById('details-' + id);
+            if (panel) panel.style.display = 'block';
+            
+            // Añadir clase activa al elemento clickeado
+            element.classList.add('active');
+        }
+
+        function openBlockModal(historialId, reportedUserId, userName) {
+            document.getElementById('modalHistorialId').value = historialId;
+            document.getElementById('modalReportedUserId').value = reportedUserId;
+            document.getElementById('modalUserName').innerText = userName;
+            document.getElementById('modalMotivo').value = '';
+            document.getElementById('motivoError').style.display = 'none';
+            document.getElementById('blockModal').style.display = 'flex';
+        }
+
+        function closeBlockModal() {
+            document.getElementById('blockModal').style.display = 'none';
+        }
+
+        function closeBlockModalOutside(event) {
+            if (event.target === document.getElementById('blockModal')) {
+                closeBlockModal();
+            }
+        }
+
+        function validateBlockForm() {
+            const motivo = document.getElementById('modalMotivo').value.trim();
+            if (motivo === '') {
+                document.getElementById('motivoError').style.display = 'block';
+                return false;
+            }
+            return true;
+        }
+
+        // Attach event listeners to list items and block buttons to avoid inline onclick quoting issues
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.adm-activ-item').forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    const id = this.getAttribute('data-incidencia-id');
+                    if (id) showIncidenceDetails(id, this);
+                });
+            });
+
+            document.querySelectorAll('.open-block-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    const historialId = this.getAttribute('data-historial-id');
+                    const reportedUserId = this.getAttribute('data-reported-user-id');
+                    const userName = this.getAttribute('data-user-name') || '';
+                    openBlockModal(historialId, reportedUserId, userName);
+                });
+            });
+
+            // Confirmation dialogue for aviso submissions
+            document.querySelectorAll('.confirm-sancion-form').forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    const msg = this.getAttribute('data-confirm-msg');
+                    if (msg && !confirm(msg)) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        });
+    </script>
+</div>
 </body>
 </html>

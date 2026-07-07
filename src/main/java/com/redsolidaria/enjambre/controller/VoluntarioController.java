@@ -6,12 +6,9 @@ import com.redsolidaria.enjambre.model.Curso;
 import com.redsolidaria.enjambre.model.Pregunta;
 import com.redsolidaria.enjambre.model.ProgresoCurso;
 import com.redsolidaria.enjambre.model.Usuario;
-import com.redsolidaria.enjambre.model.TipoComentario;
 import com.redsolidaria.enjambre.repository.HistorialAyudaRepository;
 import com.redsolidaria.enjambre.service.CursoService;
 import com.redsolidaria.enjambre.service.ProgresoService;
-import com.redsolidaria.enjambre.service.ComentarioService;
-import com.redsolidaria.enjambre.service.IncidenciaService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -38,14 +34,14 @@ public class VoluntarioController {
     @Autowired
     private ProgresoService progresoService;
 
-    @Autowired
-    private ComentarioService comentarioService;
-
-    @Autowired
-    private IncidenciaService incidenciaService;
-
     @GetMapping("/voluntario/inicio")
-    public String inicio() {
+    public String inicio(HttpSession session, Model model) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        long totalAyudados = 0;
+        if (usuario != null && "VOLUNTARIO".equals(usuario.getRol())) {
+            totalAyudados = historialAyudaRepository.countBySolicitud_VoluntarioAceptado_Id(usuario.getId());
+        }
+        model.addAttribute("totalAyudados", totalAyudados);
         return "Users/volun/alertadeAyuda";
     }
 
@@ -120,7 +116,13 @@ public class VoluntarioController {
     }
 
     @GetMapping("/voluntario/alertas")
-    public String alertas() {
+    public String alertas(HttpSession session, Model model) {
+        Usuario usuario = (Usuario) session.getAttribute("usuario");
+        long totalAyudados = 0;
+        if (usuario != null && "VOLUNTARIO".equals(usuario.getRol())) {
+            totalAyudados = historialAyudaRepository.countBySolicitud_VoluntarioAceptado_Id(usuario.getId());
+        }
+        model.addAttribute("totalAyudados", totalAyudados);
         return "Users/volun/alertadeAyuda";
     }
 
@@ -327,41 +329,6 @@ public class VoluntarioController {
                 "bloqueado", true,
                 "minutosRestantes", 60
             ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    @PostMapping("/api/voluntario/comentar")
-    @ResponseBody
-    public ResponseEntity<?> comentar(@RequestParam Long historialId,
-                                      @RequestParam String comentario,
-                                      HttpSession session) {
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Sesión no válida"));
-        }
-        try {
-            comentarioService.guardarComentario(historialId, usuario, comentario, TipoComentario.POSITIVO);
-            return ResponseEntity.ok(Map.of("mensaje", "Comentario enviado correctamente"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    @PostMapping("/api/voluntario/incidencia")
-    @ResponseBody
-    public ResponseEntity<?> registrarIncidencia(@RequestParam Long historialId,
-                                                 @RequestParam String descripcion,
-                                                 @RequestParam(value = "evidencia", required = false) MultipartFile evidencia,
-                                                 HttpSession session) {
-        Usuario usuario = (Usuario) session.getAttribute("usuario");
-        if (usuario == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Sesión no válida"));
-        }
-        try {
-            incidenciaService.guardarIncidencia(historialId, usuario, descripcion, evidencia);
-            return ResponseEntity.ok(Map.of("mensaje", "Incidencia registrada correctamente"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
