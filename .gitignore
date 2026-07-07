@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Docker / Secretos locales ###
+# El archivo .env contiene contraseñas reales — NUNCA subir a Git
+.env
+# Mantener el ejemplo de referencia (sin valores reales)
+!.env.example

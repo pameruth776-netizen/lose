@@ -13,6 +13,12 @@ import com.redsolidaria.enjambre.repository.AdministradorRepository;
 import com.redsolidaria.enjambre.service.UsuarioService;
 import com.redsolidaria.enjambre.service.EmailService;
 import com.redsolidaria.enjambre.service.UsuarioBloqueadoService;
+import com.redsolidaria.enjambre.service.DonacionService;
+import com.redsolidaria.enjambre.model.DonacionMonetaria;
+import com.redsolidaria.enjambre.model.DonacionProducto;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -22,6 +28,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
+import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -54,6 +62,9 @@ public class AdminController {
     @Autowired
     private UsuarioBloqueadoService usuarioBloqueadoService;
 
+    @Autowired
+    private DonacionService donacionService;
+
     // ========== DASHBOARD ==========
     
     @GetMapping("/dashboard")
@@ -64,6 +75,205 @@ public class AdminController {
         model.addAttribute("totalAdministradores", usuarioService.listarAdministradores().size());
         model.addAttribute("totalPendientes", usuarioService.listarUsuariosPendientes().size());
         return "admin/dashboardAdm";
+    }
+
+    @GetMapping("/informe/excel")
+    public void descargarExcel(HttpSession session, HttpServletResponse response) throws IOException {
+        Usuario admin = (Usuario) session.getAttribute("usuario");
+        if (admin == null || !"ADMIN".equals(admin.getRol())) {
+            response.sendRedirect("/login");
+            return;
+        }
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=Reporte_Sistema_RedSolidaria.xlsx");
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            // Configurar fuentes y estilos
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.CORNFLOWER_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+
+            CellStyle centerStyle = workbook.createCellStyle();
+            centerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+            // 1. Hoja: Resumen
+            Sheet sheetResumen = workbook.createSheet("Resumen");
+            sheetResumen.setDisplayGridlines(true);
+            Row rowResumenHeader = sheetResumen.createRow(0);
+            Cell cellResHeader1 = rowResumenHeader.createCell(0);
+            cellResHeader1.setCellValue("Métrica");
+            cellResHeader1.setCellStyle(headerStyle);
+            Cell cellResHeader2 = rowResumenHeader.createCell(1);
+            cellResHeader2.setCellValue("Valor");
+            cellResHeader2.setCellStyle(headerStyle);
+
+            String[][] resumenDatos = {
+                {"Total Usuarios", String.valueOf(usuarioService.listarTodosUsuarios().size())},
+                {"Voluntarios", String.valueOf(usuarioService.listarVoluntarios().size())},
+                {"Personas con Discapacidad", String.valueOf(usuarioService.listarDiscapacitados().size())},
+                {"Administradores", String.valueOf(usuarioService.listarAdministradores().size())},
+                {"Cuentas Pendientes", String.valueOf(usuarioService.listarUsuariosPendientes().size())},
+                {"Fecha de Generación", java.time.LocalDateTime.now().format(formatter)}
+            };
+
+            for (int i = 0; i < resumenDatos.length; i++) {
+                Row row = sheetResumen.createRow(i + 1);
+                row.createCell(0).setCellValue(resumenDatos[i][0]);
+                Cell valCell = row.createCell(1);
+                valCell.setCellValue(resumenDatos[i][1]);
+                if (i < resumenDatos.length - 1) {
+                    valCell.setCellStyle(centerStyle);
+                }
+            }
+            sheetResumen.autoSizeColumn(0);
+            sheetResumen.autoSizeColumn(1);
+
+            // 2. Hoja: Usuarios
+            Sheet sheetUsuarios = workbook.createSheet("Usuarios");
+            sheetUsuarios.setDisplayGridlines(true);
+            String[] headersUsuarios = {"ID", "Nombres", "Apellidos", "Email", "Rol", "Estado", "Verificado", "Fecha de Registro"};
+            Row rowUserHeader = sheetUsuarios.createRow(0);
+            for (int i = 0; i < headersUsuarios.length; i++) {
+                Cell cell = rowUserHeader.createCell(i);
+                cell.setCellValue(headersUsuarios[i]);
+                cell.setCellStyle(headerStyle);
+            }
+            List<Usuario> usuarios = usuarioService.listarTodosUsuarios();
+            int uRowIdx = 1;
+            for (Usuario u : usuarios) {
+                Row row = sheetUsuarios.createRow(uRowIdx++);
+                row.createCell(0).setCellValue(u.getId());
+                row.createCell(1).setCellValue(u.getNombres());
+                row.createCell(2).setCellValue(u.getApellidos());
+                row.createCell(3).setCellValue(u.getEmail());
+                row.createCell(4).setCellValue(u.getRol());
+                row.createCell(5).setCellValue(u.getEstado());
+                row.createCell(6).setCellValue(u.isVerificado() ? "SÍ" : "NO");
+                row.createCell(7).setCellValue(u.getFechaRegistro() != null ? u.getFechaRegistro().format(formatter) : "");
+                for (int i = 0; i < headersUsuarios.length; i++) {
+                    if (i == 0 || i == 4 || i == 5 || i == 6 || i == 7) {
+                        row.getCell(i).setCellStyle(centerStyle);
+                    }
+                }
+            }
+            for (int i = 0; i < headersUsuarios.length; i++) {
+                sheetUsuarios.autoSizeColumn(i);
+            }
+
+            // 3. Hoja: Voluntarios
+            Sheet sheetVoluntarios = workbook.createSheet("Voluntarios");
+            sheetVoluntarios.setDisplayGridlines(true);
+            String[] headersVoluntarios = {"ID", "Nombres", "Apellidos", "Email", "Código Estudiante", "Carrera", "Puntos"};
+            Row rowVolHeader = sheetVoluntarios.createRow(0);
+            for (int i = 0; i < headersVoluntarios.length; i++) {
+                Cell cell = rowVolHeader.createCell(i);
+                cell.setCellValue(headersVoluntarios[i]);
+                cell.setCellStyle(headerStyle);
+            }
+            List<com.redsolidaria.enjambre.model.Voluntario> voluntarios = usuarioService.listarVoluntarios();
+            int vRowIdx = 1;
+            for (com.redsolidaria.enjambre.model.Voluntario v : voluntarios) {
+                Row row = sheetVoluntarios.createRow(vRowIdx++);
+                row.createCell(0).setCellValue(v.getId());
+                row.createCell(1).setCellValue(v.getNombres());
+                row.createCell(2).setCellValue(v.getApellidos());
+                row.createCell(3).setCellValue(v.getEmail());
+                row.createCell(4).setCellValue(v.getCodigo());
+                row.createCell(5).setCellValue(v.getCarrera());
+                row.createCell(6).setCellValue(v.getPuntos());
+                for (int i = 0; i < headersVoluntarios.length; i++) {
+                    if (i == 0 || i == 4 || i == 6) {
+                        row.getCell(i).setCellStyle(centerStyle);
+                    }
+                }
+            }
+            for (int i = 0; i < headersVoluntarios.length; i++) {
+                sheetVoluntarios.autoSizeColumn(i);
+            }
+
+            // 4. Hoja: Donaciones Monetarias
+            Sheet sheetDM = workbook.createSheet("Donaciones Monetarias");
+            sheetDM.setDisplayGridlines(true);
+            String[] headersDM = {"ID Donación", "Donante", "Email", "Celular", "Monto (S/.)", "Código Yape", "Estado", "Fecha Donación"};
+            Row rowDMHeader = sheetDM.createRow(0);
+            for (int i = 0; i < headersDM.length; i++) {
+                Cell cell = rowDMHeader.createCell(i);
+                cell.setCellValue(headersDM[i]);
+                cell.setCellStyle(headerStyle);
+            }
+            List<DonacionMonetaria> monetarias = donacionService.obtenerTodasMonetarias();
+            int mRowIdx = 1;
+            for (DonacionMonetaria dm : monetarias) {
+                Row row = sheetDM.createRow(mRowIdx++);
+                row.createCell(0).setCellValue(dm.getId());
+                row.createCell(1).setCellValue(dm.getNombreCompleto());
+                row.createCell(2).setCellValue(dm.getEmail());
+                row.createCell(3).setCellValue(dm.getCelular());
+                row.createCell(4).setCellValue(dm.getMonto());
+                row.createCell(5).setCellValue(dm.getCodigoYape() != null ? dm.getCodigoYape() : "");
+                row.createCell(6).setCellValue(dm.getEstado());
+                row.createCell(7).setCellValue(dm.getFechaDonacion() != null ? dm.getFechaDonacion().format(formatter) : "");
+                for (int i = 0; i < headersDM.length; i++) {
+                    if (i == 0 || i == 3 || i == 4 || i == 5 || i == 6 || i == 7) {
+                        row.getCell(i).setCellStyle(centerStyle);
+                    }
+                }
+            }
+            for (int i = 0; i < headersDM.length; i++) {
+                sheetDM.autoSizeColumn(i);
+            }
+
+            // 5. Hoja: Donaciones Productos
+            Sheet sheetDP = workbook.createSheet("Donaciones Productos");
+            sheetDP.setDisplayGridlines(true);
+            String[] headersDP = {"ID Donación", "Donante", "Email", "Teléfono", "Tipo Producto", "Estado Producto", "Opción Entrega", "Dirección", "Horario", "Comentarios", "Estado", "Fecha Donación"};
+            Row rowDPHeader = sheetDP.createRow(0);
+            for (int i = 0; i < headersDP.length; i++) {
+                Cell cell = rowDPHeader.createCell(i);
+                cell.setCellValue(headersDP[i]);
+                cell.setCellStyle(headerStyle);
+            }
+            List<DonacionProducto> productos = donacionService.obtenerTodasProductos();
+            int pRowIdx = 1;
+            for (DonacionProducto dp : productos) {
+                Row row = sheetDP.createRow(pRowIdx++);
+                row.createCell(0).setCellValue(dp.getId());
+                row.createCell(1).setCellValue(dp.getNombreCompleto());
+                row.createCell(2).setCellValue(dp.getEmail());
+                row.createCell(3).setCellValue(dp.getTelefono());
+                row.createCell(4).setCellValue(dp.getTipoProducto());
+                row.createCell(5).setCellValue(dp.getEstadoProducto());
+                row.createCell(6).setCellValue(dp.getOpcionEntrega());
+                row.createCell(7).setCellValue(dp.getDireccion() != null ? dp.getDireccion() : "");
+                row.createCell(8).setCellValue(dp.getHorario() != null ? dp.getHorario() : "");
+                row.createCell(9).setCellValue(dp.getComentarios() != null ? dp.getComentarios() : "");
+                row.createCell(10).setCellValue(dp.getEstado());
+                row.createCell(11).setCellValue(dp.getFechaDonacion() != null ? dp.getFechaDonacion().format(formatter) : "");
+                for (int i = 0; i < headersDP.length; i++) {
+                    if (i == 0 || i == 3 || i == 6 || i == 10 || i == 11) {
+                        row.getCell(i).setCellStyle(centerStyle);
+                    }
+                }
+            }
+            for (int i = 0; i < headersDP.length; i++) {
+                sheetDP.autoSizeColumn(i);
+            }
+
+            workbook.write(response.getOutputStream());
+        }
     }
     
     // ========== GESTIÓN DE USUARIOS ==========

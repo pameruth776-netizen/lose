@@ -148,6 +148,21 @@
                         + Nuevo administrador
                     </a>
                 </aside>
+
+                <aside class="adm-panel adm-panel--side" style="margin-top: 1.5rem;">
+                    <div class="adm-panel__header">
+                        <h2>Informe</h2>
+                    </div>
+                    <div style="padding: 1rem 0 0 0;">
+                        <p style="margin-bottom: 1rem; font-size: 0.875rem; color: #4B5563;">Genera un archivo Excel estructurado con la información completa de la plataforma.</p>
+                        <a th:href="@{/admin/informe/excel}" class="adm-btn adm-btn--block" style="background-color: #2563EB; color: white; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: none;">
+                            <svg viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem; fill: currentColor;" aria-hidden="true">
+                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-6 2h1.5v3H13V5zm0 4.5h1.5v3H13v-3zm-3-4.5H11.5v3H10V5zm0 4.5H11.5v3H10v-3zM5 5h3.5v3H5V5zm0 4.5h3.5v3H5v-3zM5 14h14v5H5v-5zm10-9H19v3h-4V5zm0 4.5H19v3h-4v-3z"/>
+                            </svg>
+                            Descargar Excel
+                        </a>
+                    </div>
+                </aside>
             </div>
 
         </div>
