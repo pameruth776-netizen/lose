@@ -208,14 +208,17 @@
     </div>
 
 <script th:inline="javascript">
+    // ── Token único de esta sesión de verificación (generado por el servidor) ─
+    // Cada nuevo registro genera un UUID distinto → sessionStorage siempre fresco
+    const SESSION_TOKEN   = /*[[${verifyToken}]]*/ 'fallback';
+    const STORAGE_KEY     = 'verify_deadline_' + SESSION_TOKEN;
+
     // ── Leer intentos restantes desde Thymeleaf ──────────────────────────────
     const intentosRestantes = /*[[${intentosRestantes != null ? intentosRestantes : 3}]]*/ 3;
     const TOTAL_SECONDS = 90;
 
-    // ── Estado del temporizador (persiste en sessionStorage) ─────────────────
-    const STORAGE_KEY = 'verify_deadline';
+    // ── Estado del temporizador (persiste en sessionStorage por token) ────────
     let deadlineMs;
-
     const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored) {
         deadlineMs = parseInt(stored, 10);
@@ -225,18 +228,18 @@
     }
 
     // ── Referencias DOM ───────────────────────────────────────────────────────
-    const timerDisplay      = document.getElementById('timerDisplay');
-    const attemptsDisplay   = document.getElementById('attemptsDisplay');
-    const progressBar       = document.getElementById('timerProgressBar');
-    const blockedOverlay    = document.getElementById('blockedOverlay');
-    const blockedTitle      = document.getElementById('blockedTitle');
-    const blockedMsg        = document.getElementById('blockedMsg');
-    const blockedIcon       = document.getElementById('blockedIcon');
-    const redirectCountdown = document.getElementById('redirectCountdown');
-    const btnVerify         = document.getElementById('btnVerify');
-    const codigoInput       = document.getElementById('codigoInput');
+    const timerDisplay        = document.getElementById('timerDisplay');
+    const attemptsDisplay     = document.getElementById('attemptsDisplay');
+    const progressBar         = document.getElementById('timerProgressBar');
+    const blockedOverlay      = document.getElementById('blockedOverlay');
+    const blockedTitle        = document.getElementById('blockedTitle');
+    const blockedMsg          = document.getElementById('blockedMsg');
+    const blockedIcon         = document.getElementById('blockedIcon');
+    const redirectCountdown   = document.getElementById('redirectCountdown');
+    const btnVerify           = document.getElementById('btnVerify');
+    const codigoInput         = document.getElementById('codigoInput');
     const tiempoExpiradoInput = document.getElementById('tiempoExpiradoInput');
-    const verifyForm        = document.getElementById('verifyForm');
+    const verifyForm          = document.getElementById('verifyForm');
 
     // ── Actualizar intentos en pantalla ───────────────────────────────────────
     attemptsDisplay.textContent = intentosRestantes;
@@ -259,6 +262,7 @@
             redirectCountdown.textContent = secs;
             if (secs <= 0) {
                 clearInterval(interval);
+                // Limpiar SOLO la clave de este token antes de redirigir
                 sessionStorage.removeItem(STORAGE_KEY);
                 window.location.href = '/registro?expired=1';
             }
@@ -300,9 +304,9 @@
             timerDisplay.textContent = '0:00';
             progressBar.style.width = '0%';
 
-            // Marcar campo oculto y enviar el form para que el backend limpie la sesión
+            // Limpiar esta clave de sessionStorage y notificar al backend
+            sessionStorage.removeItem(STORAGE_KEY);
             tiempoExpiradoInput.value = 'true';
-            // Deshabilitar validación HTML5 del código para que el form se envíe vacío
             codigoInput.removeAttribute('required');
             codigoInput.value = '';
             verifyForm.submit();
