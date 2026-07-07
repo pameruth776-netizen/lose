@@ -173,13 +173,16 @@ public class AuthController {
             // ✅ Enviar código de verificación
             verificacionService.enviarCodigo(email);
             
-            // ✅ Inicializar contador de seguridad: 3 intentos máximos
+            // ✅ Inicializar contador de seguridad: 3 intentos máximos + token único por sesión
             session.setAttribute("verificacionIntentos", 3);
+            String verifyToken = UUID.randomUUID().toString();
+            session.setAttribute("verificacionToken", verifyToken);
             
             model.addAttribute("email", email);
             model.addAttribute("nombreCompleto", nombres + " " + apellidos);
             model.addAttribute("tipoUsuario", "voluntario");
             model.addAttribute("intentosRestantes", 3);
+            model.addAttribute("verifyToken", verifyToken);
             
             return "verificar-codigo";
             
@@ -280,13 +283,16 @@ public class AuthController {
             // ✅ Enviar código de verificación
             verificacionService.enviarCodigo(dto.getEmail());
             
-            // ✅ Inicializar contador de seguridad: 3 intentos máximos
+            // ✅ Inicializar contador de seguridad: 3 intentos máximos + token único por sesión
             session.setAttribute("verificacionIntentos", 3);
+            String verifyTokenDis = UUID.randomUUID().toString();
+            session.setAttribute("verificacionToken", verifyTokenDis);
             
             model.addAttribute("email", dto.getEmail());
             model.addAttribute("nombreCompleto", dto.getNombres() + " " + dto.getApellidos());
             model.addAttribute("tipoUsuario", "discapacitado");
             model.addAttribute("intentosRestantes", 3);
+            model.addAttribute("verifyToken", verifyTokenDis);
             
             return "verificar-codigo";
             
@@ -340,10 +346,11 @@ public class AuthController {
 
         // ── Seguridad: verificar si el tiempo expiró (enviado desde el frontend) ──
         if ("true".equals(tiempoExpirado)) {
-            // Limpiar sesión de registro temporal
+            // Limpiar sesión de registro temporal completa
             session.removeAttribute("registroTempVol");
             session.removeAttribute("registroTempDis");
             session.removeAttribute("verificacionIntentos");
+            session.removeAttribute("verificacionToken");
             return "redirect:/registro?expired=1";
         }
 
@@ -383,6 +390,7 @@ public class AuthController {
                     } catch (Exception e) {
                         model.addAttribute("error", "Error al guardar usuario: " + e.getMessage());
                         model.addAttribute("intentosRestantes", intentosRestantes);
+                        model.addAttribute("verifyToken", session.getAttribute("verificacionToken"));
                         return "verificar-codigo";
                     }
                 }
@@ -403,6 +411,7 @@ public class AuthController {
                     } catch (Exception e) {
                         model.addAttribute("error", "Error al guardar usuario: " + e.getMessage());
                         model.addAttribute("intentosRestantes", intentosRestantes);
+                        model.addAttribute("verifyToken", session.getAttribute("verificacionToken"));
                         return "verificar-codigo";
                     }
                 }
@@ -416,10 +425,11 @@ public class AuthController {
             session.setAttribute("verificacionIntentos", nuevosIntentos);
 
             if (nuevosIntentos <= 0) {
-                // Agotó los 3 intentos: limpiar sesión y redirigir al registro
+                // Agotó los 3 intentos: limpiar sesión completa y redirigir al registro
                 session.removeAttribute("registroTempVol");
                 session.removeAttribute("registroTempDis");
                 session.removeAttribute("verificacionIntentos");
+                session.removeAttribute("verificacionToken");
                 return "redirect:/registro?expired=1";
             }
 
@@ -432,6 +442,7 @@ public class AuthController {
             model.addAttribute("email", email);
             model.addAttribute("tipoUsuario", tipoUsuario);
             model.addAttribute("intentosRestantes", nuevosIntentos);
+            model.addAttribute("verifyToken", session.getAttribute("verificacionToken"));
             return "verificar-codigo";
         }
     }
