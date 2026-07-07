@@ -169,6 +169,8 @@ public class AuthController {
             temp.setCertificadoLaboralPath(certificadoPath); // ✅ AGREGAR ESTE CAMPO
             
             session.setAttribute("registroTempVol", temp);
+            session.setAttribute("verificacion_startTime", System.currentTimeMillis());
+            session.setAttribute("verificacion_intentos", 0);
             
             // ✅ Enviar código de verificación
             verificacionService.enviarCodigo(email);
@@ -176,6 +178,7 @@ public class AuthController {
             model.addAttribute("email", email);
             model.addAttribute("nombreCompleto", nombres + " " + apellidos);
             model.addAttribute("tipoUsuario", "voluntario");
+            model.addAttribute("tiempoRestante", 90);
             
             return "verificar-codigo";
             
@@ -272,6 +275,8 @@ public class AuthController {
             temp.setConadisFotoPath(conadisPath);
             
             session.setAttribute("registroTempDis", temp);
+            session.setAttribute("verificacion_startTime", System.currentTimeMillis());
+            session.setAttribute("verificacion_intentos", 0);
             
             // ✅ Enviar código de verificación
             verificacionService.enviarCodigo(dto.getEmail());
@@ -279,6 +284,7 @@ public class AuthController {
             model.addAttribute("email", dto.getEmail());
             model.addAttribute("nombreCompleto", dto.getNombres() + " " + dto.getApellidos());
             model.addAttribute("tipoUsuario", "discapacitado");
+            model.addAttribute("tiempoRestante", 90);
             
             return "verificar-codigo";
             
@@ -329,6 +335,18 @@ public class AuthController {
                                    HttpSession session,
                                    Model model) {
         
+        Long startTime = (Long) session.getAttribute("verificacion_startTime");
+        if (startTime == null) {
+            session.invalidate();
+            return "redirect:/";
+        }
+
+        long elapsed = System.currentTimeMillis() - startTime;
+        if (elapsed > 90000) { // 90 seconds
+            session.invalidate();
+            return "redirect:/";
+        }
+
         boolean valido = verificacionService.verificarCodigo(email, codigo);
         
         if (valido) {
@@ -349,6 +367,9 @@ public class AuthController {
                         session.removeAttribute("registroTempVol");
                     } catch (Exception e) {
                         model.addAttribute("error", "Error al guardar usuario: " + e.getMessage());
+                        model.addAttribute("tiempoRestante", 90 - (System.currentTimeMillis() - startTime) / 1000);
+                        model.addAttribute("email", email);
+                        model.addAttribute("tipoUsuario", tipoUsuario);
                         return "verificar-codigo";
                     }
                 }
@@ -368,15 +389,41 @@ public class AuthController {
                         session.removeAttribute("registroTempDis");
                     } catch (Exception e) {
                         model.addAttribute("error", "Error al guardar usuario: " + e.getMessage());
+                        model.addAttribute("tiempoRestante", 90 - (System.currentTimeMillis() - startTime) / 1000);
+                        model.addAttribute("email", email);
+                        model.addAttribute("tipoUsuario", tipoUsuario);
                         return "verificar-codigo";
                     }
                 }
             }
             
+            // Clean verification session variables
+            session.removeAttribute("verificacion_startTime");
+            session.removeAttribute("verificacion_intentos");
+            
             model.addAttribute("mensaje", "✅ ¡Código verificado con éxito! Tu cuenta está en revisión por el administrador. Te notificaremos por correo una vez activa.");
             return "login";
         } else {
-            model.addAttribute("error", "❌ Código inválido o expirado. Vuelve a intentarlo.");
+            Integer intentos = (Integer) session.getAttribute("verificacion_intentos");
+            if (intentos == null) intentos = 0;
+            intentos++;
+            session.setAttribute("verificacion_intentos", intentos);
+
+            if (intentos >= 3) {
+                session.invalidate();
+                return "redirect:/";
+            }
+
+            int intentosRestantes = 3 - intentos;
+            model.addAttribute("error", "❌ Código incorrecto. Intentos restantes: " + intentosRestantes);
+            
+            long remainingSeconds = 90 - ((System.currentTimeMillis() - startTime) / 1000);
+            if (remainingSeconds <= 0) {
+                session.invalidate();
+                return "redirect:/";
+            }
+            
+            model.addAttribute("tiempoRestante", remainingSeconds);
             model.addAttribute("email", email);
             model.addAttribute("tipoUsuario", tipoUsuario);
             return "verificar-codigo";

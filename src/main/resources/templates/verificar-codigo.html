@@ -68,6 +68,11 @@
             <h2>🔐 Verifica tu correo</h2>
             <div class="subtitle">Hemos enviado un código de 6 dígitos a <strong th:text="${email}"></strong></div>
             <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+            
+            <div id="timer-container" style="text-align: center; margin-bottom: 24px; font-size: 1.1rem; font-weight: 600; color: #DC2626; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                ⏱️ Tiempo restante: <span id="timer">01:30</span>
+            </div>
+
             <form th:action="@{/verificar-codigo}" method="post">
                 <input type="hidden" name="email" th:value="${email}">
                 <input type="hidden" name="tipoUsuario" th:value="${tipoUsuario}">
@@ -80,5 +85,30 @@
             <div class="resend">¿No recibiste el código? <a href="#">Reenviar</a></div>
         </div>
     </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        let timeLeft = /*[[${tiempoRestante != null ? tiempoRestante : 90}]]*/ 90;
+        /*]]>*/
+        
+        function updateTimer() {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                document.getElementById('timer').textContent = "00:00";
+                alert("El tiempo de verificación ha expirado. Serás redirigido a la página principal.");
+                window.location.href = '/';
+                return;
+            }
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = Math.floor(timeLeft % 60);
+            document.getElementById('timer').textContent = 
+                (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+            
+            timeLeft--;
+        }
+        
+        updateTimer();
+        const timerInterval = setInterval(updateTimer, 1000);
+    </script>
 </body>
 </html>
