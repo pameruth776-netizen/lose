@@ -303,31 +303,30 @@ public class AuthController {
         if (file == null || file.isEmpty()) {
             return null;
         }
-        
-        // Crear directorio si no existe
-        String uploadDir = "uploads/documentos/";
-        File directorio = new File(uploadDir);
-        if (!directorio.exists()) {
-            directorio.mkdirs();
-        }
-        
+
         // Obtener la extensión del archivo
         String extension = "";
         String originalFilename = file.getOriginalFilename();
         if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
         }
-        
+
         // Generar nombre único para el archivo
         String nombreArchivo = prefijo + "_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
-        String rutaCompleta = uploadDir + nombreArchivo;
-        
-        // Guardar el archivo
-        Path path = Paths.get(rutaCompleta);
-        Files.write(path, file.getBytes());
-        
-        // Retornar la ruta relativa para la web
-        return "/uploads/documentos/" + nombreArchivo;
+        String relPath = "uploads/documentos/";
+
+        // --- Guardar en src/main/resources/static/ (persistido en el proyecto) ---
+        String srcDir = "src/main/resources/static/" + relPath;
+        new File(srcDir).mkdirs();
+        Files.write(Paths.get(srcDir + nombreArchivo), file.getBytes());
+
+        // --- Guardar en target/classes/static/ (disponible de inmediato sin reiniciar) ---
+        String targetDir = "target/classes/static/" + relPath;
+        new File(targetDir).mkdirs();
+        Files.write(Paths.get(targetDir + nombreArchivo), file.getBytes());
+
+        // Retornar la ruta web relativa (servida por el classpath resource handler)
+        return "/" + relPath + nombreArchivo;
     }
 
     @GetMapping("/verificar-codigo")

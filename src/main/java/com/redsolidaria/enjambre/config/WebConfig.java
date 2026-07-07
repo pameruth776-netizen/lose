@@ -27,12 +27,11 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Mapear la URL /uploads/** para que busque en la carpeta física de desarrollo, en el classpath y en la raíz del proyecto
+        // Sirve archivos subidos desde src/main/resources/static/uploads/ y target/classes/static/uploads/
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(
                         "file:src/main/resources/static/uploads/",
-                        "classpath:/static/uploads/",
-                        "file:uploads/"
+                        "classpath:/static/uploads/"
                 );
     }
 }
