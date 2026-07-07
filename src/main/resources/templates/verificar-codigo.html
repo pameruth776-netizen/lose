@@ -82,10 +82,10 @@
                 </div>
                 <button type="submit" class="btn-verify">Verificar cuenta</button>
             </form>
-            <div class="resend">¿No recibiste el código? <a href="#">Reenviar</a></div>
+            <div class="resend">¿No recibiste el código? <a href="#" id="btn-reenviar">Reenviar</a></div>
         </div>
     </div>
-
+ 
     <script th:inline="javascript">
         /*<![CDATA[*/
         let timeLeft = /*[[${tiempoRestante != null ? tiempoRestante : 90}]]*/ 90;
@@ -109,6 +109,38 @@
         
         updateTimer();
         const timerInterval = setInterval(updateTimer, 1000);
+
+        document.getElementById('btn-reenviar').addEventListener('click', function(e) {
+            e.preventDefault();
+            const emailVal = document.querySelector('input[name="email"]').value;
+            
+            this.style.pointerEvents = 'none';
+            this.style.opacity = '0.5';
+            
+            fetch('/api/auth/reenviar-codigo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: emailVal })
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.style.pointerEvents = 'auto';
+                this.style.opacity = '1';
+                if (data.success || data.mensaje) {
+                    alert(data.mensaje || "✅ Código reenviado con éxito");
+                    timeLeft = 90; // Reset timer back to 90 seconds
+                } else {
+                    alert("❌ Error: " + (data.error || "No se pudo reenviar el código"));
+                }
+            })
+            .catch(err => {
+                this.style.pointerEvents = 'auto';
+                this.style.opacity = '1';
+                alert("❌ Error al conectar con el servidor.");
+            });
+        });
     </script>
 </body>
 </html>

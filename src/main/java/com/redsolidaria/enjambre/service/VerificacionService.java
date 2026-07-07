@@ -23,17 +23,19 @@ public class VerificacionService {
     }
 
     public void enviarCodigo(String email) {
+        String lowerEmail = email != null ? email.trim().toLowerCase() : "";
         String codigo = generarCodigo();
         LocalDateTime expiracion = LocalDateTime.now().plusMinutes(10);
 
-        CodigoVerificacion cv = new CodigoVerificacion(email, codigo, expiracion);
+        CodigoVerificacion cv = new CodigoVerificacion(lowerEmail, codigo, expiracion);
         codigoRepository.save(cv);
 
-        emailService.enviarCodigoVerificacion(email, codigo);
+        emailService.enviarCodigoVerificacion(lowerEmail, codigo);
     }
 
     public boolean verificarCodigo(String email, String codigoIngresado) {
-        var optionalCodigo = codigoRepository.findByEmailAndCodigoAndUsadoFalse(email, codigoIngresado);
+        String lowerEmail = email != null ? email.trim().toLowerCase() : "";
+        var optionalCodigo = codigoRepository.findByEmailAndCodigoAndUsadoFalse(lowerEmail, codigoIngresado);
 
         if (optionalCodigo.isEmpty()) {
             return false;
