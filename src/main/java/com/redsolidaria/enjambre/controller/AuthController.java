@@ -75,8 +75,7 @@ public class AuthController {
                                               HttpSession session,
                                               Model model) {
         
-        email = email != null ? email.trim().toLowerCase() : "";
-        String lowerEmail = email;
+        String lowerEmail = email.toLowerCase();
         if (!lowerEmail.matches("^u\\d{8}@utp\\.edu\\.pe$")) {
             model.addAttribute("error", "Debes usar tu correo institucional con el formato u12345678@utp.edu.pe");
             return "registroVol";
@@ -170,8 +169,6 @@ public class AuthController {
             temp.setCertificadoLaboralPath(certificadoPath); // ✅ AGREGAR ESTE CAMPO
             
             session.setAttribute("registroTempVol", temp);
-            session.setAttribute("verificacion_startTime", System.currentTimeMillis());
-            session.setAttribute("verificacion_intentos", 0);
             
             // ✅ Enviar código de verificación
             verificacionService.enviarCodigo(email);
@@ -179,7 +176,6 @@ public class AuthController {
             model.addAttribute("email", email);
             model.addAttribute("nombreCompleto", nombres + " " + apellidos);
             model.addAttribute("tipoUsuario", "voluntario");
-            model.addAttribute("tiempoRestante", 90);
             
             return "verificar-codigo";
             
@@ -197,9 +193,6 @@ public class AuthController {
                                                 HttpSession session,
                                                 Model model) {
         
-        if (dto.getEmail() != null) {
-            dto.setEmail(dto.getEmail().trim().toLowerCase());
-        }
         // Validar que las contraseñas coinciden
         if (!dto.isPasswordMatching()) {
             result.rejectValue("confirmPassword", "error", "Las contraseñas no coinciden");
@@ -279,8 +272,6 @@ public class AuthController {
             temp.setConadisFotoPath(conadisPath);
             
             session.setAttribute("registroTempDis", temp);
-            session.setAttribute("verificacion_startTime", System.currentTimeMillis());
-            session.setAttribute("verificacion_intentos", 0);
             
             // ✅ Enviar código de verificación
             verificacionService.enviarCodigo(dto.getEmail());
@@ -288,7 +279,6 @@ public class AuthController {
             model.addAttribute("email", dto.getEmail());
             model.addAttribute("nombreCompleto", dto.getNombres() + " " + dto.getApellidos());
             model.addAttribute("tipoUsuario", "discapacitado");
-            model.addAttribute("tiempoRestante", 90);
             
             return "verificar-codigo";
             
@@ -303,70 +293,31 @@ public class AuthController {
         if (file == null || file.isEmpty()) {
             return null;
         }
-
+        
+        // Crear directorio si no existe
+        String uploadDir = "uploads/documentos/";
+        File directorio = new File(uploadDir);
+        if (!directorio.exists()) {
+            directorio.mkdirs();
+        }
+        
         // Obtener la extensión del archivo
         String extension = "";
         String originalFilename = file.getOriginalFilename();
         if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
         }
-
+        
         // Generar nombre único para el archivo
         String nombreArchivo = prefijo + "_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
-        String relPath = "uploads/documentos/";
-
-        // --- Guardar en src/main/resources/static/ (persistido en el proyecto) ---
-        String srcDir = "src/main/resources/static/" + relPath;
-        new File(srcDir).mkdirs();
-        Files.write(Paths.get(srcDir + nombreArchivo), file.getBytes());
-
-        // --- Guardar en target/classes/static/ (disponible de inmediato sin reiniciar) ---
-        String targetDir = "target/classes/static/" + relPath;
-        new File(targetDir).mkdirs();
-        Files.write(Paths.get(targetDir + nombreArchivo), file.getBytes());
-
-        // Retornar la ruta web relativa (servida por el classpath resource handler)
-        return "/" + relPath + nombreArchivo;
-    }
-
-    @GetMapping("/verificar-codigo")
-    public String mostrarVerificarCodigo(HttpSession session, Model model) {
-        String email = null;
-        String tipoUsuario = null;
+        String rutaCompleta = uploadDir + nombreArchivo;
         
-        RegistroTemporalVoluntario tempVol = (RegistroTemporalVoluntario) session.getAttribute("registroTempVol");
-        RegistroTemporalDiscapacitado tempDis = (RegistroTemporalDiscapacitado) session.getAttribute("registroTempDis");
+        // Guardar el archivo
+        Path path = Paths.get(rutaCompleta);
+        Files.write(path, file.getBytes());
         
-        if (tempVol != null) {
-            email = tempVol.getEmail();
-            tipoUsuario = "voluntario";
-        } else if (tempDis != null) {
-            email = tempDis.getEmail();
-            tipoUsuario = "discapacitado";
-        }
-        
-        if (email == null) {
-            return "redirect:/registro";
-        }
-        
-        Long startTime = (Long) session.getAttribute("verificacion_startTime");
-        if (startTime == null) {
-            return "redirect:/registro";
-        }
-        
-        long elapsed = System.currentTimeMillis() - startTime;
-        long remaining = 90 - (elapsed / 1000);
-        
-        if (remaining <= 0) {
-            session.invalidate();
-            return "redirect:/";
-        }
-        
-        model.addAttribute("email", email);
-        model.addAttribute("tipoUsuario", tipoUsuario);
-        model.addAttribute("tiempoRestante", remaining);
-        
-        return "verificar-codigo";
+        // Retornar la ruta relativa para la web
+        return "/uploads/documentos/" + nombreArchivo;
     }
 
     // ========== VERIFICAR CÓDIGO (AQUÍ SE GUARDA EN BD CON verificado = TRUE) ==========
@@ -378,19 +329,6 @@ public class AuthController {
                                    HttpSession session,
                                    Model model) {
         
-        email = email != null ? email.trim().toLowerCase() : "";
-        Long startTime = (Long) session.getAttribute("verificacion_startTime");
-        if (startTime == null) {
-            session.invalidate();
-            return "redirect:/";
-        }
-
-        long elapsed = System.currentTimeMillis() - startTime;
-        if (elapsed > 90000) { // 90 seconds
-            session.invalidate();
-            return "redirect:/";
-        }
-
         boolean valido = verificacionService.verificarCodigo(email, codigo);
         
         if (valido) {
@@ -411,9 +349,6 @@ public class AuthController {
                         session.removeAttribute("registroTempVol");
                     } catch (Exception e) {
                         model.addAttribute("error", "Error al guardar usuario: " + e.getMessage());
-                        model.addAttribute("tiempoRestante", 90 - (System.currentTimeMillis() - startTime) / 1000);
-                        model.addAttribute("email", email);
-                        model.addAttribute("tipoUsuario", tipoUsuario);
                         return "verificar-codigo";
                     }
                 }
@@ -433,41 +368,15 @@ public class AuthController {
                         session.removeAttribute("registroTempDis");
                     } catch (Exception e) {
                         model.addAttribute("error", "Error al guardar usuario: " + e.getMessage());
-                        model.addAttribute("tiempoRestante", 90 - (System.currentTimeMillis() - startTime) / 1000);
-                        model.addAttribute("email", email);
-                        model.addAttribute("tipoUsuario", tipoUsuario);
                         return "verificar-codigo";
                     }
                 }
             }
             
-            // Clean verification session variables
-            session.removeAttribute("verificacion_startTime");
-            session.removeAttribute("verificacion_intentos");
-            
             model.addAttribute("mensaje", "✅ ¡Código verificado con éxito! Tu cuenta está en revisión por el administrador. Te notificaremos por correo una vez activa.");
             return "login";
         } else {
-            Integer intentos = (Integer) session.getAttribute("verificacion_intentos");
-            if (intentos == null) intentos = 0;
-            intentos++;
-            session.setAttribute("verificacion_intentos", intentos);
-
-            if (intentos >= 3) {
-                session.invalidate();
-                return "redirect:/";
-            }
-
-            int intentosRestantes = 3 - intentos;
-            model.addAttribute("error", "❌ Código incorrecto. Intentos restantes: " + intentosRestantes);
-            
-            long remainingSeconds = 90 - ((System.currentTimeMillis() - startTime) / 1000);
-            if (remainingSeconds <= 0) {
-                session.invalidate();
-                return "redirect:/";
-            }
-            
-            model.addAttribute("tiempoRestante", remainingSeconds);
+            model.addAttribute("error", "❌ Código inválido o expirado. Vuelve a intentarlo.");
             model.addAttribute("email", email);
             model.addAttribute("tipoUsuario", tipoUsuario);
             return "verificar-codigo";
@@ -482,7 +391,6 @@ public class AuthController {
                                 HttpSession session,
                                 Model model) {
         
-        email = email != null ? email.trim().toLowerCase() : "";
         Usuario usuario = usuarioService.buscarPorEmail(email);
         
         if (usuario == null) {
