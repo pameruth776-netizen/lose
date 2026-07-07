@@ -89,12 +89,12 @@ public class UsuarioService {
     }
     
     public void registrarAdministrador(String nombres, String apellidos, String email, String password) throws Exception {
-        String lowerEmail = email != null ? email.trim().toLowerCase() : null;
-        if (usuarioRepository.existsByEmail(lowerEmail)) {
+        
+        if (usuarioRepository.existsByEmail(email)) {
             throw new Exception("❌ El correo ya está registrado");
         }
         
-        Administrador admin = new Administrador(nombres, apellidos, lowerEmail, password);
+        Administrador admin = new Administrador(nombres, apellidos, email, password);
         administradorRepository.save(admin);
         System.out.println("✅ Administrador registrado: " + email);
     }
@@ -190,8 +190,7 @@ public class UsuarioService {
     }
     
     public Usuario buscarPorEmail(String email) {
-        if (email == null) return null;
-        return usuarioRepository.findByEmail(email.trim().toLowerCase()).orElse(null);
+        return usuarioRepository.findByEmail(email).orElse(null);
     }
 
     // ========== MÉTODOS PARA REGISTRO ==========
@@ -215,12 +214,11 @@ public class UsuarioService {
                                     String fotoPerfilPath, String certificadoLaboralPath,
                                     boolean verificado) throws Exception {
         
-        String lowerEmail = email != null ? email.trim().toLowerCase() : null;
-        if (usuarioRepository.existsByEmail(lowerEmail)) {
+        if (usuarioRepository.existsByEmail(email)) {
             throw new Exception("❌ El correo ya está registrado");
         }
 
-        String mensajeBloqueo = usuarioBloqueadoService.mensajeBloqueoVoluntario(lowerEmail, codigo);
+        String mensajeBloqueo = usuarioBloqueadoService.mensajeBloqueoVoluntario(email, codigo);
         if (mensajeBloqueo != null) {
             throw new Exception(mensajeBloqueo);
         }
@@ -229,7 +227,7 @@ public class UsuarioService {
             throw new Exception("❌ El código de estudiante ya está registrado");
         }
         
-        Voluntario voluntario = new Voluntario(nombres, apellidos, lowerEmail, password, codigo, carrera);
+        Voluntario voluntario = new Voluntario(nombres, apellidos, email, password, codigo, carrera);
         voluntario.setVerificado(verificado);
         
         // ✅ Guardar las rutas de los archivos
@@ -261,8 +259,7 @@ public class UsuarioService {
                                        String telefono, String direccion,
                                        boolean verificado) throws Exception {
         
-        String lowerEmail = email != null ? email.trim().toLowerCase() : null;
-        if (usuarioRepository.existsByEmail(lowerEmail)) {
+        if (usuarioRepository.existsByEmail(email)) {
             throw new Exception("❌ El correo ya está registrado");
         }
         
@@ -270,7 +267,7 @@ public class UsuarioService {
             throw new Exception("❌ El número de DNI ya está registrado");
         }
         
-        PersonaDiscapacitada persona = new PersonaDiscapacitada(nombres, apellidos, lowerEmail, password, 
+        PersonaDiscapacitada persona = new PersonaDiscapacitada(nombres, apellidos, email, password, 
                                                                 conadis, tipoDiscapacidad, telefono, direccion);
         persona.setVerificado(verificado);
         
@@ -296,12 +293,11 @@ public class UsuarioService {
                                                String conadisFotoUrl,
                                                boolean verificado) throws Exception {
         
-        String lowerEmail = email != null ? email.trim().toLowerCase() : null;
-        if (usuarioRepository.existsByEmail(lowerEmail)) {
+        if (usuarioRepository.existsByEmail(email)) {
             throw new Exception("❌ El correo ya está registrado");
         }
 
-        String mensajeBloqueo = usuarioBloqueadoService.mensajeBloqueoDiscapacitado(lowerEmail, conadis, certificadoDiscapacidad);
+        String mensajeBloqueo = usuarioBloqueadoService.mensajeBloqueoDiscapacitado(email, conadis, certificadoDiscapacidad);
         if (mensajeBloqueo != null) {
             throw new Exception(mensajeBloqueo);
         }
@@ -310,7 +306,7 @@ public class UsuarioService {
             throw new Exception("❌ El número de DNI ya está registrado");
         }
         
-        PersonaDiscapacitada persona = new PersonaDiscapacitada(nombres, apellidos, lowerEmail, password, 
+        PersonaDiscapacitada persona = new PersonaDiscapacitada(nombres, apellidos, email, password, 
                                                                 conadis, tipoDiscapacidad, telefono, direccion);
         persona.setCertificadoDiscapacidad(certificadoDiscapacidad);
         persona.setDniDelanteraUrl(dniDelanteraUrl);
@@ -336,8 +332,7 @@ public class UsuarioService {
     }
     
     public boolean existeEmail(String email) {
-        if (email == null) return false;
-        return usuarioRepository.existsByEmail(email.trim().toLowerCase());
+        return usuarioRepository.existsByEmail(email);
     }
     
     public boolean existeCodigoVoluntario(String codigo) {

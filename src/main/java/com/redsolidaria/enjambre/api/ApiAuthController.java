@@ -45,7 +45,7 @@ public class ApiAuthController {
     // ========== INICIAR SESIÓN ==========
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body, HttpSession session) {
-        String email = body.get("email") != null ? body.get("email").trim().toLowerCase() : null;
+        String email = body.get("email");
         String password = body.get("password");
 
         if (email == null || password == null) {
@@ -120,8 +120,7 @@ public class ApiAuthController {
             @RequestParam("certificadoLaboral") MultipartFile certificadoLaboral,
             HttpSession session) {
 
-        email = email != null ? email.trim().toLowerCase() : "";
-        String lowerEmail = email;
+        String lowerEmail = email.toLowerCase();
         if (!lowerEmail.matches("^u\\d{8}@utp\\.edu\\.pe$")) {
             return ResponseEntity.badRequest().body(Map.of("error", "Debes usar tu correo institucional con el formato u12345678@utp.edu.pe"));
         }
@@ -178,8 +177,6 @@ public class ApiAuthController {
             temp.setCertificadoLaboralPath(certificadoPath);
 
             session.setAttribute("registroTempVol", temp);
-            session.setAttribute("verificacion_startTime", System.currentTimeMillis());
-            session.setAttribute("verificacion_intentos", 0);
 
             verificacionService.enviarCodigo(email);
 
@@ -202,10 +199,6 @@ public class ApiAuthController {
             @ModelAttribute @Valid PersonaDiscapacitadaDTO dto,
             BindingResult result,
             HttpSession session) {
-
-        if (dto.getEmail() != null) {
-            dto.setEmail(dto.getEmail().trim().toLowerCase());
-        }
 
         if (!dto.isPasswordMatching()) {
             result.rejectValue("confirmPassword", "error", "Las contraseñas no coinciden");
@@ -267,8 +260,6 @@ public class ApiAuthController {
             temp.setConadisFotoPath(conadisPath);
 
             session.setAttribute("registroTempDis", temp);
-            session.setAttribute("verificacion_startTime", System.currentTimeMillis());
-            session.setAttribute("verificacion_intentos", 0);
 
             verificacionService.enviarCodigo(dto.getEmail());
 
@@ -286,43 +277,12 @@ public class ApiAuthController {
     }
 
     // ========== VERIFICAR CÓDIGO ==========
-    @PostMapping("/reenviar-codigo")
-    public ResponseEntity<?> reenviarCodigo(@RequestBody Map<String, String> payload, HttpSession session) {
-        String email = payload.get("email");
-        if (email == null || email.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Email es requerido"));
-        }
-        
-        String lowerEmail = email.trim().toLowerCase();
-        
-        RegistroTemporalVoluntario tempVol = (RegistroTemporalVoluntario) session.getAttribute("registroTempVol");
-        RegistroTemporalDiscapacitado tempDis = (RegistroTemporalDiscapacitado) session.getAttribute("registroTempDis");
-        
-        boolean emailValido = (tempVol != null && tempVol.getEmail().equals(lowerEmail)) ||
-                              (tempDis != null && tempDis.getEmail().equals(lowerEmail));
-                              
-        if (!emailValido) {
-            return ResponseEntity.badRequest().body(Map.of("error", "No se encontró un registro temporal activo para este correo"));
-        }
-        
-        try {
-            session.setAttribute("verificacion_startTime", System.currentTimeMillis());
-            session.setAttribute("verificacion_intentos", 0);
-            verificacionService.enviarCodigo(lowerEmail);
-            return ResponseEntity.ok(Map.of("success", true, "mensaje", "✅ Se ha enviado un nuevo código de verificación a tu correo."));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error al reenviar código: " + e.getMessage()));
-        }
-    }
-
     // ========== CHECK EMAIL (AJAX) ==========
     @GetMapping("/check-email")
     public ResponseEntity<?> checkEmail(@RequestParam String email) {
         if (email == null || email.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Email requerido"));
         }
-        email = email.trim().toLowerCase();
         boolean blocked = usuarioBloqueadoService.estaEmailBloqueado(email);
         if (blocked) {
             return ResponseEntity.ok(Map.of("exists", true, "blocked", true,
@@ -361,20 +321,6 @@ public class ApiAuthController {
 
         if (email == null || codigo == null || tipoUsuario == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "❌ email, codigo y tipoUsuario son obligatorios"));
-        }
-
-        email = email.trim().toLowerCase();
-
-        Long startTime = (Long) session.getAttribute("verificacion_startTime");
-        if (startTime == null) {
-            session.invalidate();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "❌ Sesión de verificación no válida o expirada. Por favor regístrate de nuevo."));
-        }
-
-        long elapsed = System.currentTimeMillis() - startTime;
-        if (elapsed > 90000) { // 90 seconds
-            session.invalidate();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "❌ El tiempo de verificación de 90 segundos ha expirado. Por favor regístrate de nuevo.", "redirect", true));
         }
 
         boolean valido = verificacionService.verificarCodigo(email, codigo);
@@ -424,34 +370,9 @@ public class ApiAuthController {
                 return ResponseEntity.badRequest().body(Map.of("error", "❌ Tipo de usuario no válido"));
             }
 
-            // Clean verification session variables
-            session.removeAttribute("verificacion_startTime");
-            session.removeAttribute("verificacion_intentos");
-
             return ResponseEntity.ok(Map.of("success", true, "mensaje", "✅ ¡Código verificado con éxito! Cuenta en revisión por administrador."));
         } else {
-            Integer intentos = (Integer) session.getAttribute("verificacion_intentos");
-            if (intentos == null) intentos = 0;
-            intentos++;
-            session.setAttribute("verificacion_intentos", intentos);
-
-            if (intentos >= 3) {
-                session.invalidate();
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "❌ Has superado el límite de 3 intentos. Por favor regístrate de nuevo.", "redirect", true));
-            }
-
-            int intentosRestantes = 3 - intentos;
-            long remainingSeconds = 90 - (elapsed / 1000);
-            if (remainingSeconds <= 0) {
-                session.invalidate();
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "❌ El tiempo de verificación ha expirado. Por favor regístrate de nuevo.", "redirect", true));
-            }
-
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "❌ Código incorrecto. Intentos restantes: " + intentosRestantes,
-                "intentosRestantes", intentosRestantes,
-                "tiempoRestante", remainingSeconds
-            ));
+            return ResponseEntity.badRequest().body(Map.of("error", "❌ Código inválido o expirado. Vuelve a intentarlo."));
         }
     }
 
