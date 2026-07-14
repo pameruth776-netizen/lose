@@ -15,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -50,6 +51,9 @@ public class ApiAuthController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     // ========== INICIAR SESIÓN ==========
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body, HttpSession session) {
@@ -66,7 +70,7 @@ public class ApiAuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "❌ El correo no está registrado"));
         }
 
-        if (!usuario.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, usuario.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "❌ Contraseña incorrecta"));
         }
 
