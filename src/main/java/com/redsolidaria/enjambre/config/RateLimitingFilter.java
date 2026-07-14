@@ -36,8 +36,10 @@ public class RateLimitingFilter implements Filter {
     private static final long WINDOW_SIZE_MS = TimeUnit.MINUTES.toMillis(1);
     
     // Límites específicos por patrón de URL
-    private static final int LOGIN_LIMIT = 5;
-    private static final int REGISTER_LIMIT = 3;
+    // Todos los endpoints de autenticación: 4 intentos por minuto
+    // /api/auth/check-email: 20 intentos por minuto (usa DEFAULT_LIMIT)
+    private static final int LOGIN_LIMIT = 4;
+    private static final int REGISTER_LIMIT = 4;
     private static final int DEFAULT_LIMIT = 20;
 
     @Override
