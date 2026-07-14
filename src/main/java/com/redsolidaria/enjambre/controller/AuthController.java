@@ -10,6 +10,11 @@ import com.redsolidaria.enjambre.service.UsuarioBloqueadoService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -36,6 +41,9 @@ public class AuthController {
 
     @Autowired
     private UsuarioBloqueadoService usuarioBloqueadoService;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     // ========== PÁGINAS DE LOGIN/REGISTRO ==========
 
@@ -488,6 +496,16 @@ public class AuthController {
         // Evita problemas cuando el objeto completo no puede resolverse en ese contexto.
         session.setAttribute("usuarioId", usuario.getId());
         session.setAttribute("usuarioRol", usuario.getRol());
+        
+        // Autenticar programáticamente en Spring Security
+        try {
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email, password);
+            Authentication authenticated = authenticationManager.authenticate(authToken);
+            SecurityContextHolder.getContext().setAuthentication(authenticated);
+            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
+        } catch (Exception e) {
+            System.err.println("❌ Fallo en la autenticación programática de Spring Security: " + e.getMessage());
+        }
         
         // Redirigir según el rol
         String rol = usuario.getRol();
