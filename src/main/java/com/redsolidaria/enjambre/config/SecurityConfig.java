@@ -24,7 +24,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Deshabilitar CSRF para compatibilidad con formularios HTML existentes
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/", "/login", "/registro/**", "/verificar-codigo",
+                    "/","/nosotros","/capacitacion","/donaciones","/foro" ,"/login", "/registro/**", "/verificar-codigo",
                     "/css/**", "/js/**", "/imagen/**", "/uploads/**", "/vendor/**", "/favicon.ico",
                     "/api/auth/**", "/ws/**"
                 ).permitAll()
