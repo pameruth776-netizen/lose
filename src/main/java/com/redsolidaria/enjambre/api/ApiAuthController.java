@@ -10,6 +10,11 @@ import com.redsolidaria.enjambre.service.UsuarioBloqueadoService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +46,9 @@ public class ApiAuthController {
 
     @Autowired
     private UsuarioBloqueadoService usuarioBloqueadoService;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     // ========== INICIAR SESIÓN ==========
     @PostMapping("/login")
@@ -78,6 +86,16 @@ public class ApiAuthController {
         session.setAttribute("usuario", usuario);
         session.setAttribute("usuarioId", usuario.getId());
         session.setAttribute("usuarioRol", usuario.getRol());
+
+        // Autenticar programáticamente en Spring Security
+        try {
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email, password);
+            Authentication authenticated = authenticationManager.authenticate(authToken);
+            SecurityContextHolder.getContext().setAuthentication(authenticated);
+            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
+        } catch (Exception e) {
+            System.err.println("❌ Fallo en la autenticación programática de Spring Security en API: " + e.getMessage());
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
